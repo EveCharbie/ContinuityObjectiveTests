@@ -5,29 +5,47 @@ import biorbd
 from bioptim import Bounds, QAndQDotBounds, NoisedInitialGuess
 import numpy as np
 
-from tests import test_constraint, test_objective
+from tests import test_constraint, test_objective, test_all_objectives
 
-logging.basicConfig(
-    filename="ObstacleWorkAround.log", level=logging.INFO, format="%(asctime)s:%(levelname)s: %(message)s"
-)
+DEBUG_FLAG = True
 
-parser = argparse.ArgumentParser("Run test for a particular case.")
-parser.add_argument("type", action="store", help="type of test (constraint or objective)")
-parser.add_argument("n", action="store", type=int, help="number of the test")
-parser.add_argument(
-    "--iters1", action="store", required=True, type=int, help="maximum number of iterations allowed on first pass"
-)
-parser.add_argument(
-    "--iters2", action="store", required=False, type=int, help="maximum number of iterations allowed on second pass"
-)
-parser.add_argument("--weight", action="store", required=False, type=float, help="weight of continuity objective")
+if DEBUG_FLAG:
 
-args = parser.parse_args()
+    class Arguments:
+        def __init__(self):
+            self.iters1 = 1000000
+            self.iters2 = 1000
+            self.weight = 1000000
+            self.weight_sphere = 100
+            self.idx_random = 0
+            self.type = "unconstrained"
+
+    args = Arguments()
+
+else:
+    logging.basicConfig(
+        filename="ObstacleWorkAround.log", level=logging.INFO, format="%(asctime)s:%(levelname)s: %(message)s"
+    )
+
+    parser = argparse.ArgumentParser("Run test for a particular case.")
+    parser.add_argument("type", action="store", help="type of test (constraint or objective)")
+    parser.add_argument("n", action="store", type=int, help="number of the test")
+    parser.add_argument(
+        "--iters1", action="store", required=True, type=int, help="maximum number of iterations allowed on first pass"
+    )
+    parser.add_argument(
+        "--iters2", action="store", required=False, type=int, help="maximum number of iterations allowed on second pass"
+    )
+    parser.add_argument("--weight", action="store", required=False, type=float, help="weight of continuity objective")
+
+    args = parser.parse_args()
 
 
 def prepare_x_bounds(biorbd_model):
     x_bounds = QAndQDotBounds(biorbd_model)
     x_bounds[:, 0] = 0
+    x_bounds[0, 2] = 0
+    x_bounds[1, 2] = np.pi
 
     return x_bounds
 
@@ -43,9 +61,13 @@ def prepare_u_bounds(biorbd_model):
 
 seed = 42
 np.random.seed(seed)
-sol_dir = "solutions/"
 
-biorbd_model_path = "models/pendulum_maze.bioMod"
+if DEBUG_FLAG:
+    biorbd_model_path = "../models/pendulum_maze.bioMod"
+    sol_dir = "../solutions/"
+else:
+    biorbd_model_path = "models/pendulum_maze.bioMod"
+    sol_dir = "solutions/"
 biorbd_model = biorbd.Model(biorbd_model_path)
 nb_q = biorbd_model.nbQ()
 nb_qdot = biorbd_model.nbQdot()
@@ -76,7 +98,7 @@ if args.type == "objective":
         f"iters1={args.iters1} "
         f"iters2={args.iters2} "
         f"weight={args.weight} "
-        #f"n_threads={n_threads}..."
+        f"n_threads={n_threads}..."
     )
 
     test_objective(
@@ -85,14 +107,14 @@ if args.type == "objective":
         n_shooting,
         x_bounds,
         u_bounds,
-        x_inits[args.n],
-        u_inits[args.n],
-        args.n,
+        x_inits[args.idx_random],
+        u_inits[args.idx_random],
+        args.idx_random,
         args.iters1,
         args.iters2,
         args.weight,
         sol_dir,
-        #n_threads=n_threads,
+        n_threads=n_threads,
     )
 
     logging.info("Done, Good Bye!")
@@ -104,7 +126,7 @@ elif args.type == "constraint":
         f"final_time={final_time} "
         f"n_shooting={n_shooting} "
         f"iters1={args.iters1} "
-        #f"n_threads={n_threads}..."
+        f"n_threads={n_threads}..."
     )
 
     test_constraint(
@@ -113,12 +135,42 @@ elif args.type == "constraint":
         n_shooting,
         x_bounds,
         u_bounds,
-        x_inits[args.n],
-        u_inits[args.n],
-        args.n,
+        x_inits[args.idx_random],
+        u_inits[args.idx_random],
+        args.idx_random,
         args.iters1,
         sol_dir,
-        #n_threads=n_threads,
+        n_threads=n_threads,
+    )
+
+    logging.info("Done, Good Bye!")
+
+elif args.type == "unconstrained":
+    logging.info(
+        f"Testing all objectives (no contraints) "
+        f"seed={seed} "
+        f"final_time={final_time} "
+        f"n_shooting={n_shooting} "
+        f"iters1={args.iters1} "
+        f"weight={args.weight} "
+        f"weight_sphere={args.weight_sphere} "
+        f"n_threads={n_threads}..."
+    )
+
+    test_all_objectives(
+        biorbd_model_path,
+        final_time,
+        n_shooting,
+        x_bounds,
+        u_bounds,
+        x_inits[args.idx_random],
+        u_inits[args.idx_random],
+        args.idx_random,
+        args.iters1,
+        args.weight,
+        args.weight_sphere,
+        sol_dir,
+        n_threads=n_threads,
     )
 
     logging.info("Done, Good Bye!")
