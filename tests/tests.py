@@ -164,8 +164,8 @@ def test_all_objectives(
     sol1.time = stop - start
 
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    filename = "unconstrained-{sol_index}-{weight}-{max_iters}-{timestamp}.pickle".format(
-        sol_index=i, weight=weight, max_iters=max_iteration_first, timestamp=timestamp
+    filename = "unconstrained-{sol_index}-{weight}-{weight_sphere}-{max_iters}-{timestamp}.pickle".format(
+        sol_index=i, weight=weight, weight_sphere=weight_sphere, max_iters=max_iteration_first, timestamp=timestamp
     )
     try:
         with open(sol_dir + filename, "wb") as f:
