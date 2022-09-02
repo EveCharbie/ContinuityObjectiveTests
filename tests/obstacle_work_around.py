@@ -10,6 +10,17 @@ from tests import test_constraint, test_objective, test_all_objectives
 DEBUG_FLAG = True
 
 if DEBUG_FLAG:
+parser = argparse.ArgumentParser("Run test for a particular case.")
+parser.add_argument("type", action="store", help="type of test (constraint or objective)")
+parser.add_argument("n", action="store", type=int, help="number of the test")
+parser.add_argument("--var", action="store", type=str, help="what is the variable in this run (varit or varpoids)")
+parser.add_argument(
+    "--iters1", action="store", required=True, type=int, help="maximum number of iterations allowed on first pass"
+)
+parser.add_argument(
+    "--iters2", action="store", required=False, type=int, help="maximum number of iterations allowed on second pass"
+)
+parser.add_argument("--weight", action="store", required=False, type=float, help="weight of continuity objective")
 
     class Arguments:
         def __init__(self):
@@ -107,9 +118,10 @@ if args.type == "objective":
         n_shooting,
         x_bounds,
         u_bounds,
-        x_inits[args.idx_random],
-        u_inits[args.idx_random],
-        args.idx_random,
+        x_inits[args.n],
+        u_inits[args.n],
+        args.n,
+        args.var,
         args.iters1,
         args.iters2,
         args.weight,
