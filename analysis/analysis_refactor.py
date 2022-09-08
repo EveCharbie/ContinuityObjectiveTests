@@ -4,6 +4,7 @@ import pickle
 import biorbd
 import numpy as np
 from matplotlib import pyplot as plt
+from IPython import embed
 
 class DataFrame:
 
@@ -179,35 +180,131 @@ def compute_transpersion(m, sol, nb_shooting):
     for i in range(nb_sub_intervals * nb_shooting + 1):
         transpersion[i] = transpersion_dist_sum(x_sub_interval[:, i])
 
-    fig, ax = plt.subplots(3, 1)
-    ax[0].plot(x_sub_interval[0, :], '-b')
-    ax[1].plot(x_sub_interval[1, :], '-b')
-    ax[0].plot(range(0, nb_shooting*nb_sub_intervals+1, nb_sub_intervals), x[0, :], 'ok')
-    ax[1].plot(range(0, nb_shooting*nb_sub_intervals+1, nb_sub_intervals), x[1, :], 'ok')
-    ax[2].plot(transpersion)
-    ax[2].plot(range(0, nb_shooting*nb_sub_intervals+1, nb_sub_intervals), transpersion[range(0, nb_shooting*nb_sub_intervals+1, nb_sub_intervals)], 'ok')
-    plt.show()
+    # fig, ax = plt.subplots(3, 1)
+    # ax[0].plot(x_sub_interval[0, :], '-b')
+    # ax[1].plot(x_sub_interval[1, :], '-b')
+    # ax[0].plot(range(0, nb_shooting*nb_sub_intervals+1, nb_sub_intervals), x[0, :], 'ok')
+    # ax[1].plot(range(0, nb_shooting*nb_sub_intervals+1, nb_sub_intervals), x[1, :], 'ok')
+    # ax[2].plot(transpersion)
+    # ax[2].plot(range(0, nb_shooting*nb_sub_intervals+1, nb_sub_intervals), transpersion[range(0, nb_shooting*nb_sub_intervals+1, nb_sub_intervals)], 'ok')
+    # plt.show()
 
-    return transpersion
+    return np.sum(transpersion)
 
 
 def graph_convergence(df, m, nb_shooting):
 
-    # plt.figure()
-
+    max_cost = 0
+    min_cost = 100000
+    max_time_to_optimize = 0
+    min_time_to_optimize = 100000
+    max_transpersion = 0
+    # Constrined problem
     constraint = np.array([])
     for i, sol in enumerate(df(type='constraint')):
         if sol.status == 0:
+            sol_transpersion = compute_transpersion(m, sol, nb_shooting)
             if len(constraint) == 0:
-                sol_transpersion = compute_transpersion(m, sol, nb_shooting)
-                constraint = np.array([sol.cost(), sol.time(), sol_transpersion])
+                constraint = np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])
+            else:
+                constraint = np.vstack((constraint, np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])))
+            if float(sol.cost) > max_cost:
+                max_cost = float(sol.cost)
+            if float(sol.cost) < min_cost:
+                min_cost = float(sol.cost)
+            if max_time_to_optimize > sol.real_time_to_optimize:
+                max_time_to_optimize = sol.real_time_to_optimize
+            if min_time_to_optimize < sol.real_time_to_optimize:
+                min_time_to_optimize = sol.real_time_to_optimize
+            if max_transpersion > sol_transpersion:
+                max_transpersion = sol_transpersion
 
-    # plt.scatter(constraint[0, :], constraint[1, :], c=[constraint], marker='s', label='Constrained')
-    # plt.xlabel("")
-    # plt.legend()
-    # plt.show()
+    # Objective -> Constrained problem (varit)
+    objective = np.array([])
+    for i, sol in enumerate(df(type='objective')):
+        if sol.status == 0:
+            sol_transpersion = compute_transpersion(m, sol, nb_shooting)
+            if len(objective) == 0:
+                objective = np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])
+            else:
+                objective = np.vstack((objective, np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])))
+
+    # Unconstrained problem
+    unconstrained = np.array([])
+    for i, sol in enumerate(df(type='unconstrained')):
+        if sol.status == 0:
+            sol_transpersion = compute_transpersion(m, sol, nb_shooting)
+            if len(unconstrained) == 0:
+                unconstrained = np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])
+            else:
+                unconstrained = np.vstack((unconstrained, np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])))
+
+    embed()
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+    plt_0 = ax[0].scatter(constraint[:, 0], constraint[:, 1], c=constraint[:, 2], marker='s', label='Constrained')
+    plt_1 = ax[0].scatter(objective[:, 0], objective[:, 1], c=objective[:, 2], marker='o', label='Objective')
+    plt_2 = ax[0].scatter(unconstrained[:, 0], unconstrained[:, 1], c=unconstrained[:, 2], marker='x', label='Unconstrained')
+    plt.xlabel("Cost")
+    plt.ylabel("time to optimize")
+    plt.legend()
+    cbar = plt.colorbar(plt_0, ax=ax) # format=ticker.FuncFormatter(fmt)
+    cbar.set_label('Transpersion sum')
+    # cbar.ax.set_title('This i')
+    plt.show()
+
+
+    return max_cost, min_cost, max_time_to_optimize, min_time_to_optimize, max_transpersion
+
+
+
+def graph_kinmatics(df, max_cost, min_cost, max_time_to_optimize, min_time_to_optimize, max_transpersion):
+
+    plt.figure()
+
+    i = 0
+    for sol in enumerate(df(type='constraint')):
+        if sol.status == 0:
+            i += 1
+            if i == 1:
+                plt.plot(sol., color=)
+            else:
+                constraint = np.vstack((constraint, np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])))
+
+    # Objective -> Constrained problem (varit)
+    objective = np.array([])
+    for i, sol in enumerate(df(type='objective')):
+        if sol.status == 0:
+            sol_transpersion = compute_transpersion(m, sol, nb_shooting)
+            if len(objective) == 0:
+                objective = np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])
+            else:
+                objective = np.vstack((objective, np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])))
+
+    # Unconstrained problem
+    unconstrained = np.array([])
+    for i, sol in enumerate(df(type='unconstrained')):
+        if sol.status == 0:
+            sol_transpersion = compute_transpersion(m, sol, nb_shooting)
+            if len(unconstrained) == 0:
+                unconstrained = np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])
+            else:
+                unconstrained = np.vstack((unconstrained, np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])))
+
+    embed()
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+    plt_0 = ax[0].scatter(constraint[:, 0], constraint[:, 1], c=constraint[:, 2], marker='s', label='Constrained')
+    plt_1 = ax[0].scatter(objective[:, 0], objective[:, 1], c=objective[:, 2], marker='o', label='Objective')
+    plt_2 = ax[0].scatter(unconstrained[:, 0], unconstrained[:, 1], c=unconstrained[:, 2], marker='x', label='Unconstrained')
+    plt.xlabel("Cost")
+    plt.ylabel("time to optimize")
+    plt.legend()
+    cbar = plt.colorbar(plt_0, ax=ax) # format=ticker.FuncFormatter(fmt)
+    cbar.set_label('Transpersion sum')
+    # cbar.ax.set_title('This i')
+    plt.show()
+
+
     return
-
 
 #########   Loading data   #########
 
@@ -433,7 +530,8 @@ mincost.case
 mincostinit = next(filter(lambda s: s.case == mincost.case, df(type="objective", var="varopt", phase="initial")))
 
 
-graph_convergence(df, m, nb_shooting)
+max_cost, min_cost, max_time_to_optimize, min_time_to_optimize, max_transpersion = graph_convergence(df, m, nb_shooting)
+
 
 # import bioviz
 # viz = bioviz.Viz("../models/pendulum_maze.bioMod", show_floor=False)
