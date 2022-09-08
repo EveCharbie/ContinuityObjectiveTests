@@ -47,11 +47,20 @@ def load_sol(filename):
         return pickle.load(f)
 
 
-def extract_keys(filename):
+def extract_data_sol(m, filename, data_sol):
     filename = filename.split("-")
 
+    states = data_sol.states['all']
+    controls = data_sol.controls['all']
+    time = data_sol.parameters['time'][0][0]
+    cost = float(data_sol.cost)
+    time_opt = data_sol.real_time_to_optimize
+    status = sol.status
+    transpersion = compute_transpersion(m, states, controls, time, nb_shooting)
+
     if filename[0] == "objective":
-        type_, var, phase, case, weight, iter_, weight_sphere = filename[0], filename[1], filename[2], filename[3], filename[4], filename[5], None
+        type_, var, phase, case, weight, iter_ = filename[0], filename[1], filename[2], filename[3], filename[4], filename[5]
+        weight_sphere = None
         case = int(case)
         if weight == "1000.0":
             weight = "1K"
@@ -60,17 +69,22 @@ def extract_keys(filename):
         elif weight == "1000000000.0":
             weight = "1G"
         iter_ = int(iter_)
-        return dict(type=type_, var=var, phase=phase, case=case, weight=weight, iter=iter_, weight_sphere=weight_sphere)
+        # return dict(type=type_, var=var, phase=phase, case=case, weight=weight, iter=iter_, states=states, controls=controls, time=time, cost=cost, time_opt=time_opt, transpersion=transpersion)
+        return np.array([type_, case, var, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
 
     elif filename[0] == "constraint":
-        type_, var, phase, case, weight, iter_, weight_sphere = filename[0], None, None, filename[1], None, None, None
+        type_, case = filename[0], filename[1]
+        var, phase, weight, iter_, weight_sphere = None, None, None, None, None
         case = int(case)
-        return dict(type=type_, var=var, phase=phase, case=case, weight=weight, iter=iter_, weight_sphere=weight_sphere)
+        # return dict(type=type_, case=case, states=states, controls=controls, time=time, cost=cost, time_opt=time_opt, transpersion=transpersion)
+        return np.array([type_, case, var, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
 
     elif filename[0] == "unconstrained":
-        type_, var, phase, case, weight, iter_, weight_sphere = filename[0], None, None, filename[1], filename[2], filename[3], filename[4]
+        type_, case, weight, iter_, weight_sphere = filename[0], filename[1], filename[2], filename[3], filename[4]
+        var, phase = None, None
         case = int(case)
-        return dict(type=type_, var=var, phase=phase, case=case, weight=weight, iter=iter_, weight_sphere=weight_sphere)
+        # return dict(type=type_, case=case, weight=weight, iter=iter_, weight_sphere=weight_sphere, states=states, controls=controls, time=time, cost=cost, time_opt=time_opt, transpersion=transpersion)
+        return np.array([type_, case, var, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
 
     else:
         raise Exception(filename)
@@ -133,7 +147,7 @@ def plot_hist(ax, dist, title, xlabel, bins="rice"):
     ax.set_xlabel(xlabel)
 
 
-def compute_transpersion(m, sol, nb_shooting):
+def compute_transpersion(m, x, u, t, nb_shooting):
 
     def transpersion_dist_sum(x):
 
@@ -166,10 +180,6 @@ def compute_transpersion(m, sol, nb_shooting):
         return x
 
     nb_sub_intervals = 10
-    x = sol.states["all"]
-    u = sol.controls['all']
-    t = sol.parameters['time'][0][0]
-    # dt = t / nb_shooting
 
     x_sub_interval = np.zeros((4, nb_sub_intervals * nb_shooting + 1))
     x_sub_interval[:, 0] = x[:, 0]
@@ -192,13 +202,9 @@ def compute_transpersion(m, sol, nb_shooting):
     return np.sum(transpersion)
 
 
-def graph_convergence(df, m, nb_shooting):
-
-    max_cost = 0
-    min_cost = 100000
-    max_time_to_optimize = 0
-    min_time_to_optimize = 100000
-    max_transpersion = 0
+def graph_convergence(m, nb_shooting,
+                     properties_constrained, properties_objective, properties_unconstrained,
+                     states_constrained, states_objective, states_unconstrained):
 
     # Constrined problem
     constraint = np.array([])
@@ -274,7 +280,7 @@ def graph_convergence(df, m, nb_shooting):
     plt.show()
 
 
-    return max_cost, min_cost, max_time_to_optimize, min_time_to_optimize, max_transpersion
+    return
 
 
 
@@ -320,20 +326,60 @@ def graph_kinmatics(df, max_cost, min_cost, max_time_to_optimize, min_time_to_op
 MEAN_FLAG = False
 HISTOGRAM_FLAG = False
 
-directory = "../solutions/smaller_folder"
-filenames = [*filter(lambda filename: ".pickle" in filename, os.listdir(directory))]
-
-solutions = map(load_sol, map(lambda f: f"{directory}/{f}", filenames))
-keys = map(extract_keys, filenames)
-
-df = DataFrame("type", "var", "phase", "case", "weight", "weight_sphere", "iter")
+directory = "../solutions"
 
 nb_shooting = 500
 m = biorbd.Model("../models/pendulum_maze.bioMod")
 
-for k, sol in zip(keys, solutions):
-    sol.case = k["case"]
-    df.add(sol, **k)
+properties_constrained = []
+states_constrained = []
+properties_objective = []
+states_objective = []
+properties_unconstrained = []
+states_unconstrained = []
+for filename in os.listdir(directory):
+    with open(f"{directory}/{filename}", "rb") as f:
+        data_sol = pickle.load(f)
+        if filename[:len("constraint")] == "constraint":
+            properties, states, _ = extract_data_sol(m, filename, data_sol)
+            if np.shape(properties_constrained) == (0, ):
+                properties_constrained = properties
+                states_constrained = states
+            else:
+                properties_constrained = np.vstack((properties_constrained, properties))
+                states_constrained = np.dstack((states_constrained, states))
+        elif filename[:len("objective")] == "objective":
+            properties, states, _ = extract_data_sol(m, filename, data_sol)
+            if np.shape(properties_objective) == (0,):
+                properties_objective = properties
+                states_objective = states
+            else:
+                properties_objective = np.vstack((properties_objective, properties))
+                states_objective = np.dstack((states_objective, states))
+        elif filename[:len("unconstraint")] == "unconstraint":
+            properties, states, _ = extract_data_sol(m, filename, data_sol)
+            if np.shape(properties_unconstrained) == (0, ):
+                properties_unconstrained = properties
+                states_unconstrained = states
+            else:
+                properties_unconstrained = np.vstack((properties_unconstrained, properties))
+                states_unconstrained = np.dstack((states_unconstrained, states))
+        else:
+            print('probleme nom de fichier no reconnu')
+
+
+max_cost = np.max(properties[9, :])
+min_cost = 100000
+max_time_to_optimize = 0
+min_time_to_optimize = 100000
+max_transpersion = 0
+
+graph_convergence(m, nb_shooting,
+                 properties_constrained, properties_objective, properties_unconstrained,
+                 states_constrained, states_objective, states_unconstrained)
+graph_kinmatics(df, max_cost, min_cost, max_time_to_optimize, min_time_to_optimize, max_transpersion)
+
+
 #
 #
 # #########   Continuity constraint   #########
@@ -545,9 +591,6 @@ for k, sol in zip(keys, solutions):
 # # mincost.case
 # # mincostinit = next(filter(lambda s: s.case == mincost.case, df(type="objective", var="varopt", phase="initial")))
 #
-
-max_cost, min_cost, max_time_to_optimize, min_time_to_optimize, max_transpersion = graph_convergence(df, m, nb_shooting)
-graph_kinmatics(df, max_cost, min_cost, max_time_to_optimize, min_time_to_optimize, max_transpersion)
 
 # import bioviz
 # viz = bioviz.Viz("../models/pendulum_maze.bioMod", show_floor=False)
