@@ -3,51 +3,27 @@ import os
 import pickle
 import biorbd
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from IPython import embed
-
-class DataFrame:
-
-    def __init__(self, *keys):
-        self._keys = keys
-        self._data = []
-
-    def _select(self, **keywords):
-        if (result := set(keywords.keys()) - set(self._keys)) != set():
-            raise KeyError(f"Invalid keys {result}. Keys must be in {set(self._keys)}.")
-
-        out = []
-        for keys, data in self._data:
-            select = True
-            for key, value in keywords.items():
-                if keys[key] != value:
-                    select = False
-                    break
-            if select:
-                out.append(data)
-
-        return out
-
-    def __call__(self, **keywords):
-        return self._select(**keywords)
-
-    def add(self, data, **keyword):
-        if set(keyword.keys()) != set(self._keys):
-            raise KeyError(f"Keys must match {set(self._keys)}.")
-
-        d = dict.fromkeys(self._keys)
-        for key, value in keyword.items():
-            d[key] = value
-
-        self._data.append((d, data))
-
-
-def load_sol(filename):
-    with open(filename, "rb") as f:
-        return pickle.load(f)
 
 
 def extract_data_sol(m, filename, data_sol):
+    
+    # 0: type_ 
+    # 1: case
+    # 2: var
+    # 3: phase
+    # 4: case
+    # 5: weight
+    # 6: iter_
+    # 7: weight_sphere
+    # 8: time (time of the trial)
+    # 9: cost
+    # 10: time_opt (time spent in the solver)
+    # 11: status
+    # 12: transpersion
+    
     filename = filename.split("-")
 
     states = data_sol.states['all']
@@ -55,7 +31,7 @@ def extract_data_sol(m, filename, data_sol):
     time = data_sol.parameters['time'][0][0]
     cost = float(data_sol.cost)
     time_opt = data_sol.real_time_to_optimize
-    status = sol.status
+    status = data_sol.status
     transpersion = compute_transpersion(m, states, controls, time, nb_shooting)
 
     if filename[0] == "objective":
@@ -90,54 +66,12 @@ def extract_data_sol(m, filename, data_sol):
         raise Exception(filename)
 
 
-def extract_opt_time(solution):
-    return solution.solver_time_to_optimize
-
-
-def extract_total_time(solution):
-    return solution.total_time
-
-
-def extract_phase_time(solution):
-    return solution.phase_time[-1]
-
-
-def extract_iteration(solution):
-    return solution.iterations
-
-
-def extract_status(solution):
-    return solution.status
-
-
-def extract_q(solution):
-    return solution.states["q"]
-
-
-def extract_qdot(solution):
-    return solution.states["qdot"]
-
-
-def extract_tau(solution):
-    return solution.controls["tau"]
-
-
-def extract_cost(solution):
-    return solution.cost
-
 def analyse(extractor, solutions):
     vals = np.array([*map(extractor, solutions)])
     vals.shape = vals.size
     val_avg = np.mean(vals)
     val_std = np.std(vals)
     return vals, val_avg, val_std
-
-
-def convergence_rate(solutions):
-    status = np.array([*map(extract_status, solutions)])
-    converged = status == 0
-    convergence = len(status[converged] ) /len(status)
-    return status, converged, convergence
 
 
 def plot_hist(ax, dist, title, xlabel, bins="rice"):
@@ -202,81 +136,26 @@ def compute_transpersion(m, x, u, t, nb_shooting):
     return np.sum(transpersion)
 
 
-def graph_convergence(m, nb_shooting,
-                     properties_constrained, properties_objective, properties_unconstrained,
-                     states_constrained, states_objective, states_unconstrained):
-
-    # Constrined problem
-    constraint = np.array([])
-    for i, sol in enumerate(df(type='constraint')):
-        if sol.status == 0:
-            sol_transpersion = compute_transpersion(m, sol, nb_shooting)
-            if len(constraint) == 0:
-                constraint = np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])
-            else:
-                constraint = np.vstack((constraint, np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])))
-            if float(sol.cost) > max_cost:
-                max_cost = float(sol.cost)
-            if float(sol.cost) < min_cost:
-                min_cost = float(sol.cost)
-            if max_time_to_optimize > sol.real_time_to_optimize:
-                max_time_to_optimize = sol.real_time_to_optimize
-            if min_time_to_optimize < sol.real_time_to_optimize:
-                min_time_to_optimize = sol.real_time_to_optimize
-            if max_transpersion > sol_transpersion:
-                max_transpersion = sol_transpersion
-
-    # Objective -> Constrained problem (varit)
-    objective = np.array([])
-    for i, sol in enumerate(df(type='objective')):
-        if sol.status == 0:
-            sol_transpersion = compute_transpersion(m, sol, nb_shooting)
-            if len(objective) == 0:
-                objective = np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])
-            else:
-                objective = np.vstack((objective, np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])))
-            if float(sol.cost) > max_cost:
-                max_cost = float(sol.cost)
-            if float(sol.cost) < min_cost:
-                min_cost = float(sol.cost)
-            if max_time_to_optimize > sol.real_time_to_optimize:
-                max_time_to_optimize = sol.real_time_to_optimize
-            if min_time_to_optimize < sol.real_time_to_optimize:
-                min_time_to_optimize = sol.real_time_to_optimize
-            if max_transpersion > sol_transpersion:
-                max_transpersion = sol_transpersion
-
-    # Unconstrained problem
-    unconstrained = np.array([])
-    for i, sol in enumerate(df(type='unconstrained')):
-        if sol.status == 0:
-            sol_transpersion = compute_transpersion(m, sol, nb_shooting)
-            if len(unconstrained) == 0:
-                unconstrained = np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])
-            else:
-                unconstrained = np.vstack((unconstrained, np.array([float(sol.cost), sol.real_time_to_optimize, sol_transpersion])))
-            if float(sol.cost) > max_cost:
-                max_cost = float(sol.cost)
-            if float(sol.cost) < min_cost:
-                min_cost = float(sol.cost)
-            if max_time_to_optimize > sol.real_time_to_optimize:
-                max_time_to_optimize = sol.real_time_to_optimize
-            if min_time_to_optimize < sol.real_time_to_optimize:
-                min_time_to_optimize = sol.real_time_to_optimize
-            if max_transpersion > sol_transpersion:
-                max_transpersion = sol_transpersion
-
+def graph_convergence(properties_constrained_converged, 
+                      properties_objective_varpoids_final_converged, 
+                      properties_objective_varit_final_converged, 
+                      properties_unconstrained_converged,
+                      min_transpersion,
+                      max_transpersion):
 
     fig, ax = plt.subplots(nrows=1, ncols=1)
-    plt_0 = ax[0].scatter(constraint[:, 0], constraint[:, 1], c=constraint[:, 2], marker='s', label='Constrained')
-    plt_1 = ax[0].scatter(objective[:, 0], objective[:, 1], c=objective[:, 2], marker='o', label='Objective')
-    plt_2 = ax[0].scatter(unconstrained[:, 0], unconstrained[:, 1], c=unconstrained[:, 2], marker='x', label='Unconstrained')
+    plt_0 = ax.scatter(properties_constrained_converged[:, 9], properties_constrained_converged[:, 10], c=properties_constrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='s', label='Constrained')
+    plt_1 = ax.scatter(properties_objective_varpoids_final_converged[:, 9], properties_objective_varpoids_final_converged[:, 10], c=properties_objective_varpoids_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='o', label='Objective')
+    plt_2 = ax.scatter(properties_objective_varit_final_converged[:, 9], properties_objective_varit_final_converged[:, 10], c=properties_objective_varit_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='o')
+    plt_3 = ax.scatter(properties_unconstrained_converged[:, 9], properties_unconstrained_converged[:, 10], c=properties_unconstrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='x', label='Unconstrained')
     plt.xlabel("Cost")
     plt.ylabel("time to optimize")
+    ax.set_xscale('log')
+    ax.set_yscale('log')
     plt.legend()
     cbar = plt.colorbar(plt_0, ax=ax) # format=ticker.FuncFormatter(fmt)
     cbar.set_label('Transpersion sum')
-    # cbar.ax.set_title('This i')
+    plt.savefig("../figures/convergence_info_graph.png", dpi=300)
     plt.show()
 
 
@@ -284,38 +163,52 @@ def graph_convergence(m, nb_shooting,
 
 
 
-def graph_kinmatics(df, max_cost, min_cost, max_time_to_optimize, min_time_to_optimize, max_transpersion):
+def graph_kinmatics(properties_constrained_converged, 
+                    properties_objective_varpoids_final_converged, 
+                    properties_objective_varit_final_converged, 
+                    properties_unconstrained_converged,
+                    states_constrained_converged,
+                    states_objective_varpoids_final_converged,
+                    states_objective_varit_final_converged,
+                    states_unconstrained_converged,    
+                    max_cost, 
+                    min_cost,
+                    nb_shooting):
 
-    cmap = matplotlib.cm.get_cmap('viridis')
+    cmap = cm.get_cmap('viridis')
 
-    def plot_lines(key_word, linestyle):
-        i = 0
-        for sol in enumerate(df(type=key_word)):
-            if sol.status == 0:
-                i += 1
-                color = cmap(float(sol.cost) / (max_cost - min_cost))
-                if i == 1:
-                    ax[0].plot(np.linspace(0, sol.parameters['time'][0][0], nb_shooting), sol.states["all"][0, :],
-                               color=color, linestyle=linestyle, label=key_word)
-                else:
-                    ax[0].plot(np.linspace(0, sol.parameters['time'][0][0], nb_shooting), sol.states["all"][0, :],
-                               color=color, linestyle=linestyle)
-                    ax[1].plot(np.linspace(0, sol.parameters['time'][0][0], nb_shooting), sol.states["all"][1, :],
-                               color=color, linestyle=linestyle)
+    def plot_lines(key_word, linestyle, properti, state, nb_shooting, cmap, ax):
+
+        for i in range(np.shape(properti)[0]):
+            color = cmap(properti[i, 9] / (max_cost - min_cost))
+            time_vector = np.linspace(0, properti[i, 8], nb_shooting+1)
+            if i == 0:
+                ax[0].plot(time_vector, state[0, :, i],
+                           color=color, linestyle=linestyle, label=key_word)
+            else:
+                ax[0].plot(time_vector, state[0, :, i],
+                           color=color, linestyle=linestyle)
+                ax[1].plot(time_vector, state[1, :, i],
+                           color=color, linestyle=linestyle)
         return
 
-    fig, ax = plt.subplots(1, 2)
-    fig.subplots_adjust(top=0.8)
+    fig, ax = plt.subplots(2, 1)
+    fig.subplots_adjust(top=0.8, right=0.75)
 
-    plot_lines('constraint', 'densely dotted')
-    plot_lines('objective', 'densely dashed')
-    plot_lines('unconstrained', 'solid')
+    plot_lines('Constraint', (0, (1, 1)), properties_constrained_converged, states_constrained_converged, nb_shooting, cmap, ax)
+    plot_lines('Objective (varpoids)', (0, (5, 1)), properties_objective_varpoids_final_converged, states_objective_varpoids_final_converged, nb_shooting, cmap, ax)
+    plot_lines('Objective (varit)', (0, (5, 1)), properties_objective_varit_final_converged, states_objective_varit_final_converged, nb_shooting, cmap, ax)
+    plot_lines('Unconstrained', 'solid', properties_unconstrained_converged, states_unconstrained_converged, nb_shooting, cmap, ax)
 
     ax[1].set_xlabel("Time")
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.35), ncol=3, frameon=False)
-    cbar = plt.colorbar(cmap, ax=ax) # format=ticker.FuncFormatter(fmt)
+    ax[0].legend(loc='upper center', bbox_to_anchor=(0.5, 1.35), ncol=2, frameon=False)
+    ax[0].tick_params(axis='x', bottom=False, labelbottom=False)
+    fake_plot_for_color = ax[0].scatter(np.array([0]), np.array([0]), marker='.', c=np.array([min_cost]), vmin=min_cost, vmax=max_cost)
+    cbar_ax = fig.add_axes([0.8, 0.11, 0.03, 0.7])
+    cbar = plt.colorbar(fake_plot_for_color, cax=cbar_ax)
     cbar.set_label('Cost')
     # cbar.ax.set_title('This i')
+    plt.savefig("../figures/kinematics_graph.png", dpi=300)
     plt.show()
 
 
@@ -326,74 +219,113 @@ def graph_kinmatics(df, max_cost, min_cost, max_time_to_optimize, min_time_to_op
 MEAN_FLAG = False
 HISTOGRAM_FLAG = False
 
+# directory = "../solutions/mini_folder"
 directory = "../solutions"
 
 nb_shooting = 500
 m = biorbd.Model("../models/pendulum_maze.bioMod")
 
-properties_constrained = []
-states_constrained = []
-properties_objective = []
-states_objective = []
-properties_unconstrained = []
-states_unconstrained = []
+
+# loop over the files in the folder to load them
+properties_all = []
+states_all = []
 for filename in os.listdir(directory):
     with open(f"{directory}/{filename}", "rb") as f:
         data_sol = pickle.load(f)
-        if filename[:len("constraint")] == "constraint":
-            properties, states, _ = extract_data_sol(m, filename, data_sol)
-            if np.shape(properties_constrained) == (0, ):
-                properties_constrained = properties
-                states_constrained = states
-            else:
-                properties_constrained = np.vstack((properties_constrained, properties))
-                states_constrained = np.dstack((states_constrained, states))
-        elif filename[:len("objective")] == "objective":
-            properties, states, _ = extract_data_sol(m, filename, data_sol)
-            if np.shape(properties_objective) == (0,):
-                properties_objective = properties
-                states_objective = states
-            else:
-                properties_objective = np.vstack((properties_objective, properties))
-                states_objective = np.dstack((states_objective, states))
-        elif filename[:len("unconstraint")] == "unconstraint":
-            properties, states, _ = extract_data_sol(m, filename, data_sol)
-            if np.shape(properties_unconstrained) == (0, ):
-                properties_unconstrained = properties
-                states_unconstrained = states
-            else:
-                properties_unconstrained = np.vstack((properties_unconstrained, properties))
-                states_unconstrained = np.dstack((states_unconstrained, states))
+        properties, states, _ = extract_data_sol(m, filename, data_sol)
+        if np.shape(properties_all) == (0, ):
+            properties_all = properties
+            states_all = states
         else:
-            print('probleme nom de fichier no reconnu')
+            properties_all = np.vstack((properties_all, properties))
+            states_all = np.dstack((states_all, states))
 
 
-max_cost = np.max(properties[9, :])
-min_cost = 100000
-max_time_to_optimize = 0
-min_time_to_optimize = 100000
-max_transpersion = 0
+# Sort the files loaded + print convergence rate
+properties_constrained = properties_all[np.where(properties_all[:, 0] == "constraint"), :][0]
+states_constrained = states_all[:, :, np.where(properties_all[:, 0] == "constraint")][:, :, 0, :]
+constrained_index_converged = np.where(properties_constrained[:, 11] == 0)
+properties_constrained_converged = properties_constrained[constrained_index_converged, :][0]
+states_constrained_converged = states_constrained[:, :, constrained_index_converged][:, :, 0, :]
+constrained_convergence_rate = len(constrained_index_converged[0]) / len(properties_constrained) * 100
+print("Convergence rate fully constrained OCP : ", constrained_convergence_rate, "%")
 
-graph_convergence(m, nb_shooting,
-                 properties_constrained, properties_objective, properties_unconstrained,
-                 states_constrained, states_objective, states_unconstrained)
-graph_kinmatics(df, max_cost, min_cost, max_time_to_optimize, min_time_to_optimize, max_transpersion)
+properties_objective = properties_all[np.where(properties_all[:, 0] == "objective"), :][0]
+states_objective = states_all[:, :, np.where(properties_all[:, 0] == "objective")][:, :, 0, :]
+properties_objective_varpoids = properties_objective[np.where(properties_objective[:, 2] == "varpoids"), :][0]
+states_objective_varpoids = states_objective[:, :, np.where(properties_objective[:, 2] == "varpoids")][:, :, 0, :]
+properties_objective_varit = properties_objective[np.where(properties_objective[:, 2] == "varit"), :][0]
+states_objective_varit = states_objective[:, :, np.where(properties_objective[:, 2] == "varit")][:, :, 0, :]
+properties_objective_varpoids_initial = properties_objective_varpoids[np.where(properties_objective_varpoids[:, 3] == "initial"), :][0]
+states_objective_varpoids_initial = states_objective_varpoids[:, :, np.where(properties_objective_varpoids[:, 3] == "initial")][:, :, 0, :]
+properties_objective_varpoids_final = properties_objective_varpoids[np.where(properties_objective_varpoids[:, 3] == "final"), :][0]
+states_objective_varpoids_final = states_objective_varpoids[:, :, np.where(properties_objective_varpoids[:, 3] == "final")][:, :, 0, :]
+properties_objective_varit_initial = properties_objective_varit[np.where(properties_objective_varit[:, 3] == "initial"), :][0]
+states_objective_varit_initial = states_objective_varit[:, :, np.where(properties_objective_varit[:, 3] == "initial")][:, :, 0, :]
+properties_objective_varit_final = properties_objective_varit[np.where(properties_objective_varit[:, 3] == "final"), :][0]
+states_objective_varit_final = states_objective_varit[:, :, np.where(properties_objective_varit[:, 3] == "final")][:, :, 0, :]
+#### varopt ???
+objective_varpoids_initial_index_converged = np.where(properties_objective_varpoids_initial[:, 11] == 0)
+properties_objective_varpoids_initial_converged = properties_objective_varpoids_initial[objective_varpoids_initial_index_converged, :][0]
+states_objective_varpoids_initial_converged = states_objective_varpoids_initial[:, :, objective_varpoids_initial_index_converged][:, :, 0, :]
+objective_varpoids_initial_convergence_rate = len(objective_varpoids_initial_index_converged[0]) / len(properties_objective_varpoids_initial) * 100
+print("Convergence rate objective->constraint OCP (varpoids) initial step : ", objective_varpoids_initial_convergence_rate, "%")
+objective_varpoids_final_index_converged = np.where(properties_objective_varpoids_final[:, 11] == 0)
+properties_objective_varpoids_final_converged = properties_objective_varpoids_final[objective_varpoids_final_index_converged, :][0]
+states_objective_varpoids_final_converged = states_objective_varpoids_final[:, :, objective_varpoids_final_index_converged][:, :, 0, :]
+objective_varpoids_final_convergence_rate = len(objective_varpoids_final_index_converged[0]) / len(properties_objective_varpoids_final) * 100
+print("Convergence rate objective->constraint OCP (varpoids) final step : ", objective_varpoids_final_convergence_rate, "%")
+objective_varit_initial_index_converged = np.where(properties_objective_varit_initial[:, 11] == 0)
+properties_objective_varit_initial_converged = properties_objective_varit_initial[objective_varit_initial_index_converged, :][0]
+states_objective_varit_initial_converged = states_objective_varit_initial[:, :, objective_varit_initial_index_converged][:, :, 0, :]
+objective_varit_initial_convergence_rate = len(objective_varit_initial_index_converged[0]) / len(properties_objective_varit_initial) * 100
+print("Convergence rate objective->constraint OCP (varit) initial step : ", objective_varit_initial_convergence_rate, "%")
+objective_varit_final_index_converged = np.where(properties_objective_varit_final[:, 11] == 0)
+properties_objective_varit_final_converged = properties_objective_varit_final[objective_varit_final_index_converged, :][0]
+states_objective_varit_final_converged = states_objective_varit_final[:, :, objective_varit_final_index_converged][:, :, 0, :]
+objective_varit_final_convergence_rate = len(objective_varit_final_index_converged[0]) / len(properties_objective_varit_final) * 100
+print("Convergence rate objective->constraint OCP (varit) final step : ", objective_varit_final_convergence_rate, "%")
+
+properties_unconstrained = properties_all[np.where(properties_all[:, 0] == "unconstrained"), :][0]
+states_unconstrained = states_all[:, :, np.where(properties_all[:, 0] == "unconstrained")][:, :, 0, :]
+unconstrained_index_converged = np.where(properties_unconstrained[:, 11] == 0)
+properties_unconstrained_converged = properties_unconstrained[unconstrained_index_converged, :][0]
+states_unconstrained_converged = states_unconstrained[:, :, unconstrained_index_converged][:, :, 0, :]
+unconstrained_convergence_rate = len(unconstrained_index_converged[0]) / len(properties_unconstrained) * 100
+print("Convergence rate fully unconstrained OCP : ", unconstrained_convergence_rate, "%")
 
 
-#
-#
-# #########   Continuity constraint   #########
-#
-# constraints = np.array(df(type="constraint"))
-#
-# status, converged, convergence = convergence_rate(constraints)
-# print("Convergence rate for constraints:", convergence *100, "%")
-#
-# if MEAN_FLAG:
-#     costs, cost_avg, cost_std = analyse(extract_cost, constraints[converged])
-#     opt_times, opt_time_avg, opt_time_std = analyse(extract_opt_time, constraints[converged])
-#     phase_times, phase_time_avg, phase_time_std = analyse(extract_phase_time, constraints[converged])
-#
+properties_all_converged = properties_all[np.where(properties_all[:, 11] == 0), :][0]
+
+max_cost = np.max(properties_all_converged[:, 9])
+min_cost = np.min(properties_all_converged[:, 9])
+max_time_to_optimize = np.max(properties_all_converged[:, 10])
+min_time_to_optimize = np.min(properties_all_converged[:, 10])
+max_transpersion = np.max(properties_all_converged[:, 12])
+min_transpersion = np.min(properties_all_converged[:, 12])
+
+
+
+graph_convergence(properties_constrained_converged,
+                  properties_objective_varpoids_final_converged, 
+                  properties_objective_varit_final_converged, 
+                  properties_unconstrained_converged,
+                  min_transpersion,
+                  max_transpersion)
+
+graph_kinmatics(properties_constrained_converged,
+                properties_objective_varpoids_final_converged,
+                properties_objective_varit_final_converged,
+                properties_unconstrained_converged,
+                states_constrained_converged,
+                states_objective_varpoids_final_converged,
+                states_objective_varit_final_converged,
+                states_unconstrained_converged,
+                max_cost,
+                min_cost,
+                nb_shooting)
+
+
 # if HISTOGRAM_FLAG:
 #     fig, (cax, tax, pax) = plt.subplots(1, 3, figsize=(25, 5))
 #     plot_hist(cax, costs, "Costs distribution", "cost")
@@ -402,63 +334,7 @@ graph_kinmatics(df, max_cost, min_cost, max_time_to_optimize, min_time_to_optimi
 #     plt.tight_layout()
 #     fig.suptitle("All 10000 max iterations, 500 shootings, converged only")
 #     fig.savefig("../figures/constraint.pdf")
-#
-#
-#
-# #########   Variable first max iterations   #########
-#
-# init100it = df(type="objective", phase="initial", var="varit", iter=100)
-# init1000it = df(type="objective", phase="initial", var="varit", iter=1000)
-# init10000it = df(type="objective", phase="initial", var="varit", iter=10000)
-# initialvarits = np.array([init100it, init1000it, init10000it])
-#
-# final100it = df(type="objective", phase="final", var="varit", iter=100)
-# final1000it = df(type="objective", phase="final", var="varit", iter=1000)
-# final10000it = df(type="objective", phase="final", var="varit", iter=10000)
-# finalvarits = np.array([final100it, final1000it, final10000it])
-#
-# final_convergence_rate = []
-# final_converged = []
-# for varit in finalvarits:
-#     _, converged, convergence = convergence_rate(varit)
-#     final_convergence_rate.append(convergence)
-#     final_converged.append(converged)
-#
-# print("Final convergence rate for objective->contrains (varit):", *map(lambda x: f"{ x *100:.1f} %", final_convergence_rate))
-#
-# if MEAN_FLAG:
-#     final_costs = []
-#     final_opt_times = []
-#     final_phase_times = []
-#     for i in range(len(finalvarits)):
-#         varit = finalvarits[i][final_converged[i]]
-#         costs, _, _ = analyse(extract_cost, varit)
-#         opt_times, _, _ = analyse(extract_total_time, varit)
-#         phase_times, _, _ = analyse(extract_phase_time, varit)
-#         final_costs.append(costs)
-#         final_opt_times.append(opt_times)
-#         final_phase_times.append(phase_times)
-#
-# initial_convergence_rate = []
-# for varit in initialvarits:
-#     _, converged, convergence = convergence_rate(varit)
-#     initial_convergence_rate.append(convergence)
-#
-# if MEAN_FLAG:
-#     initial_costs = []
-#     initial_opt_times = []
-#     initial_phase_times = []
-#     for i in range(len(initialvarits)):
-#         varit = initialvarits[i][final_converged[i]]
-#         costs, _, _ = analyse(extract_cost, varit)
-#         opt_times, _, _ = analyse(extract_opt_time, varit)
-#         phase_times, _, _ = analyse(extract_phase_time, varit)
-#         initial_costs.append(costs)
-#         initial_opt_times.append(opt_times)
-#         initial_phase_times.append(phase_times)
-#
-# print("Initial convergence rate for objective (varit):", *map(lambda x: f"{ x *100:.1f} %", initial_convergence_rate))
-#
+
 # if HISTOGRAM_FLAG:
 #     fig, ((cax100, tax100, pax100), (cax1K, tax1K, pax1K), (cax10K, tax10K, pax10K)) = plt.subplots(3, 3, figsize=(25, 15))
 #     plot_hist(cax100, final_costs[0], "Costs distribution of final optimisation with 100 initial iterations", "cost")
@@ -491,95 +367,6 @@ graph_kinmatics(df, max_cost, min_cost, max_time_to_optimize, min_time_to_optimi
 #     plt.tight_layout()
 #     fig.suptitle("All weight 1M, 500 shootings, converged only")
 #     fig.savefig("../figures/initial_varit.pdf")
-#
-#
-#
-# #########   Variable weight on continuity objective   #########
-#
-# init100poids = df(type="objective", phase="initial", var="varpoids", weight="1K")
-# init1000poids = df(type="objective", phase="initial", var="varpoids", weight="1M")
-# init10000poids = df(type="objective", phase="initial", var="varpoids", weight="1G")
-# initialvarpoids = np.array([init100poids, init1000poids, init10000poids])
-#
-# final100poids = df(type="objective", phase="final", var="varpoids", weight="1K")
-# final1000poids = df(type="objective", phase="final", var="varpoids", weight="1M")
-# final10000poids = df(type="objective", phase="final", var="varpoids", weight="1G")
-# finalvarpoids = np.array([final100poids, final1000poids, final10000poids])
-#
-# final_convergence_rate = []
-# final_converged = []
-# for varpoids in finalvarpoids:
-#     _, converged, convergence = convergence_rate(varpoids)
-#     final_convergence_rate.append(convergence)
-#     final_converged.append(converged)
-#
-# print("Final convergence rate for objective->contrains (varpoids):", *map(lambda x: f"{ x *100:.1f} %", final_convergence_rate))
-#
-# if MEAN_FLAG:
-#     final_costs = []
-#     final_opt_times = []
-#     final_phase_times = []
-#     for i in range(len(finalvarpoids)):
-#         varpoids = finalvarpoids[i][final_converged[i]]
-#         costs, _, _ = analyse(extract_cost, varpoids)
-#         opt_times, _, _ = analyse(extract_total_time, varpoids)
-#         phase_times, _, _ = analyse(extract_phase_time, varpoids)
-#         final_costs.append(costs)
-#         final_opt_times.append(opt_times)
-#         final_phase_times.append(phase_times)
-#
-# initial_convergence_rate = []
-# for varpoids in initialvarpoids:
-#     _, converged, convergence = convergence_rate(varpoids)
-#     initial_convergence_rate.append(convergence)
-#
-# if MEAN_FLAG:
-#     initial_costs = []
-#     initial_opt_times = []
-#     initial_phase_times = []
-#     for i in range(len(initialvarpoids)):
-#         varpoids = initialvarpoids[i][final_converged[i]]
-#         costs, _, _ = analyse(extract_cost, varpoids)
-#         opt_times, _, _ = analyse(extract_opt_time, varpoids)
-#         phase_times, _, _ = analyse(extract_phase_time, varpoids)
-#         initial_costs.append(costs)
-#         initial_opt_times.append(opt_times)
-#         initial_phase_times.append(phase_times)
-#
-# print("Initial convergence rate for objective->constraints (varpoids):", *map(lambda x: f"{ x *100:.1f} %", initial_convergence_rate))
-#
-# if HISTOGRAM_FLAG:
-#     fig, ((cax100, tax100, pax100), (cax1K, tax1K, pax1K), (cax10K, tax10K, pax10K)) = plt.subplots(3, 3, figsize=(25, 15))
-#     plot_hist(cax100, final_costs[0], "Costs distribution of final optimisation with initial weight 1K", "cost")
-#     plot_hist(cax1K, final_costs[1], "Costs distribution of final optimisation with initial weight 1M", "cost")
-#     plot_hist(cax10K, final_costs[2], "Costs distribution of final optimisation with initial weight 1G", "cost")
-#
-#     plot_hist(tax100, final_opt_times[0], "Total optimistation time distribution of final optimisation with initial weight 1K", "time (s)")
-#     plot_hist(tax1K, final_opt_times[1], "Total optimistation time distribution of final optimisation with initial weight 1M", "time (s)")
-#     plot_hist(tax10K, final_opt_times[2], "Total optimistation time distribution of final optimisation with initial weight 1G", "time (s)")
-#
-#     plot_hist(pax100, final_phase_times[0], "Phase time distribution of final optimisation with initial weight 1K", "time (s)")
-#     plot_hist(pax1K, final_phase_times[1], "Phase time distribution of final optimisation with initial weight 1M", "time (s)")
-#     plot_hist(pax10K, final_phase_times[2], "Phase time distribution of final optimisation with initial weight 1G", "time (s)")
-#     plt.tight_layout()
-#     fig.suptitle("All 10000 initial max iterations, 500 shootings, converged only")
-#     fig.savefig("../figures/final_varpo.pdf")
-#
-#     fig, ((cax100, tax100, pax100), (cax1K, tax1K, pax1K), (cax10K, tax10K, pax10K)) = plt.subplots(3, 3, figsize=(25, 15))
-#     plot_hist(cax100, initial_costs[0], "Costs distribution of initial optimisation with initial weight 1K", "cost")
-#     plot_hist(cax1K, initial_costs[1], "Costs distribution of initial optimisation with initial weight 1M", "cost")
-#     plot_hist(cax10K, initial_costs[2], "Costs distribution of initial optimisation with initial weight 1G", "cost")
-#
-#     plot_hist(tax100, initial_opt_times[0], "Optimistation time distribution of initial optimisation with initial weight 1K", "time (s)")
-#     plot_hist(tax1K, initial_opt_times[1], "Optimistation time distribution of initial optimisation with initial weight 1M", "time (s)")
-#     plot_hist(tax10K, initial_opt_times[2], "Optimistation time distribution of initial optimisation with initial weight 1G", "time (s)")
-#
-#     plot_hist(pax100, initial_phase_times[0], "Phase time distribution of initial optimisation with initial weight 1K", "time (s)")
-#     plot_hist(pax1K, initial_phase_times[1], "Phase time distribution of initial optimisation with initial weight 1M", "time (s)")
-#     plot_hist(pax10K, initial_phase_times[2], "Phase time distribution of initial optimisation with initial weight 1G", "time (s)")
-#     plt.tight_layout()
-#     fig.suptitle("All 10000 initial max iterations, 500 shootings, converged only")
-#     fig.savefig("../figures/initial_varpo.pdf")
 #
 #
 #
