@@ -147,7 +147,7 @@ def graph_convergence(properties_constrained_converged,
     plt_0 = ax.scatter(properties_constrained_converged[:, 9], properties_constrained_converged[:, 10], c=properties_constrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='s', label='Constrained')
     plt_1 = ax.scatter(properties_objective_varpoids_final_converged[:, 9], properties_objective_varpoids_final_converged[:, 10], c=properties_objective_varpoids_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='o', label='Objective')
     plt_2 = ax.scatter(properties_objective_varit_final_converged[:, 9], properties_objective_varit_final_converged[:, 10], c=properties_objective_varit_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='o')
-    plt_3 = ax.scatter(properties_unconstrained_converged[:, 9], properties_unconstrained_converged[:, 10], c=properties_unconstrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='x', label='Unconstrained')
+    # plt_3 = ax.scatter(properties_unconstrained_converged[:, 9], properties_unconstrained_converged[:, 10], c=properties_unconstrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='x', label='Unconstrained')
     plt.xlabel("Cost")
     plt.ylabel("time to optimize")
     ax.set_xscale('log')
@@ -198,7 +198,7 @@ def graph_kinmatics(properties_constrained_converged,
     plot_lines('Constraint', (0, (1, 1)), properties_constrained_converged, states_constrained_converged, nb_shooting, cmap, ax)
     plot_lines('Objective (varpoids)', (0, (5, 1)), properties_objective_varpoids_final_converged, states_objective_varpoids_final_converged, nb_shooting, cmap, ax)
     plot_lines('Objective (varit)', (0, (5, 1)), properties_objective_varit_final_converged, states_objective_varit_final_converged, nb_shooting, cmap, ax)
-    plot_lines('Unconstrained', 'solid', properties_unconstrained_converged, states_unconstrained_converged, nb_shooting, cmap, ax)
+    # plot_lines('Unconstrained', 'solid', properties_unconstrained_converged, states_unconstrained_converged, nb_shooting, cmap, ax)
 
     ax[1].set_xlabel("Time")
     ax[0].legend(loc='upper center', bbox_to_anchor=(0.5, 1.35), ncol=2, frameon=False)

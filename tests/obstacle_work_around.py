@@ -7,7 +7,7 @@ import numpy as np
 
 from tests import test_constraint, test_objective, test_all_objectives
 
-DEBUG_FLAG = True
+DEBUG_FLAG = False
 
 if DEBUG_FLAG:
     class Arguments:
@@ -37,6 +37,7 @@ else:
         "--iters2", action="store", required=False, type=int, help="maximum number of iterations allowed on second pass"
     )
     parser.add_argument("--weight", action="store", required=False, type=float, help="weight of continuity objective")
+    parser.add_argument("--sphere_weight", action="store", required=False, type=float, help="weight of sphere collision objective")
 
     args = parser.parse_args()
 

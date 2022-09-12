@@ -26,3 +26,15 @@ done
 for ((n=0; n<100; n=n+1)); do
   python3 obstacle_work_around.py objective $n --var varopt --iters1 1000 --iters2 10000 --weight 1000000000
 done
+
+
+# run tests without constraints for shpere/contionuity weights
+weights=(1000 1000000 1000000000)
+sphere_weights=(1000 1000000 1000000000)
+for ((n=0; n<100; n=n+1)); do
+  for weight in ${weights[*]}; do
+    for sphere_weight in ${sphere_weights[*]}; do
+      python3 obstacle_work_around.py objective $n --var varpoids --iters1 10000 --iters2 10000 --weight ${weight} --sphere_weight ${sphere_weight}
+    done
+  done
+done
