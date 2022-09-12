@@ -152,11 +152,11 @@ def graph_convergence(properties_constrained_converged,
     plt.ylabel("time to optimize")
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.legend()
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.10), ncol=3, frameon=False)
     cbar = plt.colorbar(plt_0, ax=ax) # format=ticker.FuncFormatter(fmt)
     cbar.set_label('Transpersion sum')
     plt.savefig("../figures/convergence_info_graph.png", dpi=300)
-    plt.show()
+    # plt.show()
 
 
     return
@@ -209,7 +209,7 @@ def graph_kinmatics(properties_constrained_converged,
     cbar.set_label('Cost')
     # cbar.ax.set_title('This i')
     plt.savefig("../figures/kinematics_graph.png", dpi=300)
-    plt.show()
+    # plt.show()
 
 
     return
@@ -220,6 +220,7 @@ MEAN_FLAG = False
 HISTOGRAM_FLAG = False
 
 # directory = "../solutions/mini_folder"
+# directory = "../solutions/smaller_folder"
 directory = "../solutions"
 
 nb_shooting = 500
@@ -230,15 +231,16 @@ m = biorbd.Model("../models/pendulum_maze.bioMod")
 properties_all = []
 states_all = []
 for filename in os.listdir(directory):
-    with open(f"{directory}/{filename}", "rb") as f:
-        data_sol = pickle.load(f)
-        properties, states, _ = extract_data_sol(m, filename, data_sol)
-        if np.shape(properties_all) == (0, ):
-            properties_all = properties
-            states_all = states
-        else:
-            properties_all = np.vstack((properties_all, properties))
-            states_all = np.dstack((states_all, states))
+    if filename[-7:] == ".pickle":
+        with open(f"{directory}/{filename}", "rb") as f:
+            data_sol = pickle.load(f)
+            properties, states, _ = extract_data_sol(m, filename, data_sol)
+            if np.shape(properties_all) == (0, ):
+                properties_all = properties
+                states_all = states
+            else:
+                properties_all = np.vstack((properties_all, properties))
+                states_all = np.dstack((states_all, states))
 
 
 # Sort the files loaded + print convergence rate
