@@ -143,11 +143,29 @@ def graph_convergence(properties_constrained_converged,
                       min_transpersion,
                       max_transpersion):
 
-    fig, ax = plt.subplots(nrows=1, ncols=1)
-    plt_0 = ax.scatter(properties_constrained_converged[:, 9], properties_constrained_converged[:, 10], c=properties_constrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='s', label='Constrained')
-    plt_1 = ax.scatter(properties_objective_varpoids_final_converged[:, 9], properties_objective_varpoids_final_converged[:, 10], c=properties_objective_varpoids_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='o', label='Objective')
-    plt_2 = ax.scatter(properties_objective_varit_final_converged[:, 9], properties_objective_varit_final_converged[:, 10], c=properties_objective_varit_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='o')
-    # plt_3 = ax.scatter(properties_unconstrained_converged[:, 9], properties_unconstrained_converged[:, 10], c=properties_unconstrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='x', label='Unconstrained')
+    fig, ax = plt.subplots(nrows=2, ncols=2)
+    ax = ax.ravel()
+    plt_0 = ax[0].scatter(properties_constrained_converged[:, 9], properties_constrained_converged[:, 10], c=properties_constrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Constrained')
+    plt_1 = ax[1].scatter(properties_objective_varpoids_final_converged[:, 9], properties_objective_varpoids_final_converged[:, 10], c=properties_objective_varpoids_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Objective')
+    plt_2 = ax[2].scatter(properties_objective_varit_final_converged[:, 9], properties_objective_varit_final_converged[:, 10], c=properties_objective_varit_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.')
+    plt_3 = ax[3].scatter(properties_unconstrained_converged[:, 9], properties_unconstrained_converged[:, 10], c=properties_unconstrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Unconstrained')
+    ax[0].errorbar(np.mean(properties_constrained_converged[:, 9]), np.mean(properties_constrained_converged[:, 10]),
+                   xerr=np.std(properties_constrained_converged[:, 9]), yerr=np.std(properties_constrained_converged[:, 10]),
+                   color=np.mean(properties_constrained_converged[:, 12]))
+    ax[1].errorbar(np.mean(properties_objective_varpoids_final_converged[:, 9]), np.mean(properties_objective_varpoids_final_converged[:, 10]),
+                   xerr=np.std(properties_objective_varpoids_final_converged[:, 9]), yerr=np.std(properties_objective_varpoids_final_converged[:, 10]),
+                   color=np.mean(properties_objective_varpoids_final_converged[:, 12]))
+    ax[2].errorbar(np.mean(properties_objective_varit_final_converged[:, 9]), np.mean(properties_objective_varit_final_converged[:, 10]),
+                   xerr=np.std(properties_objective_varit_final_converged[:, 9]), yerr=np.std(properties_objective_varit_final_converged[:, 10]),
+                   color=np.mean(properties_objective_varit_final_converged[:, 12]))
+    ax[3].errorbar(np.mean(properties_unconstrained_converged[:, 9]), np.mean(properties_unconstrained_converged[:, 10]),
+                   xerr=np.std(properties_unconstrained_converged[:, 9]), yerr=np.std(properties_unconstrained_converged[:, 10]),
+                   color=np.mean(properties_unconstrained_converged[:, 12]))
+    ax[0].set_title("Constrained")
+    ax[1].set_title("Objective var poinds")
+    ax[2].set_title("Objective var iterations")
+    ax[3].set_title("Unconstrained")
+
     plt.xlabel("Cost")
     plt.ylabel("time to optimize")
     ax.set_xscale('log')
@@ -157,8 +175,6 @@ def graph_convergence(properties_constrained_converged,
     cbar.set_label('Transpersion sum')
     plt.savefig("../figures/convergence_info_graph.png", dpi=300)
     # plt.show()
-
-
     return
 
 
@@ -198,7 +214,7 @@ def graph_kinmatics(properties_constrained_converged,
     plot_lines('Constraint', (0, (1, 1)), properties_constrained_converged, states_constrained_converged, nb_shooting, cmap, ax)
     plot_lines('Objective (varpoids)', (0, (5, 1)), properties_objective_varpoids_final_converged, states_objective_varpoids_final_converged, nb_shooting, cmap, ax)
     plot_lines('Objective (varit)', (0, (5, 1)), properties_objective_varit_final_converged, states_objective_varit_final_converged, nb_shooting, cmap, ax)
-    # plot_lines('Unconstrained', 'solid', properties_unconstrained_converged, states_unconstrained_converged, nb_shooting, cmap, ax)
+    plot_lines('Unconstrained', 'solid', properties_unconstrained_converged, states_unconstrained_converged, nb_shooting, cmap, ax)
 
     ax[1].set_xlabel("Time")
     ax[0].legend(loc='upper center', bbox_to_anchor=(0.5, 1.35), ncol=2, frameon=False)
@@ -300,13 +316,27 @@ print("Convergence rate fully unconstrained OCP : ", unconstrained_convergence_r
 properties_all_converged = properties_all[np.where(properties_all[:, 11] == 0), :][0]
 
 max_cost = np.max(properties_all_converged[:, 9])
+# max_cost = np.sort(properties_all_converged[:, 9])[-3]
 min_cost = np.min(properties_all_converged[:, 9])
 max_time_to_optimize = np.max(properties_all_converged[:, 10])
 min_time_to_optimize = np.min(properties_all_converged[:, 10])
 max_transpersion = np.max(properties_all_converged[:, 12])
+# max_transpersion = np.sort(properties_all_converged[:, 12])[-3]
 min_transpersion = np.min(properties_all_converged[:, 12])
 
-
+cost_90th_percentile = np.percentile(properties_all_converged[:, 9], 90)
+idx_90_constrainted = np.where(properties_constrained_converged[:, 9] < cost_90th_percentile)
+idx_90_varpoids_final = np.where(properties_objective_varpoids_final_converged[:, 9] < cost_90th_percentile)
+idx_90_varit_final = np.where(properties_objective_varit_final_converged[:, 9] < cost_90th_percentile)
+idx_90_unconstrainted = np.where(properties_unconstrained_converged[:, 9] < cost_90th_percentile)
+pourcentage_constrainted = len(idx_90_constrainted) / np.shape(properties_constrained_converged)[0] * 100
+pourcentage_varpoids_final = len(idx_90_varpoids_final) / np.shape(properties_varpoids_final_converged)[0] * 100
+pourcentage_varit_final = len(idx_90_varit_final) / np.shape(properties_varit_final_converged)[0] * 100
+pourcentage_unconstrainted = len(idx_90_unconstrainted) / np.shape(properties_unconstrainted_converged)[0] * 100
+print(f"{pourcentage_constrainted} % of the constrained solutions were below the 90th percentile for the cost function value")
+print(f"{pourcentage_varpoids_final} % of the objective (varpoids) solutions were below the 90th percentile for the cost function value")
+print(f"{pourcentage_varit_final} % of the objective (varit) solutions were below the 90th percentile for the cost function value")
+print(f"{pourcentage_unconstrainted} % of the unconstrained solutions were below the 90th percentile for the cost function value")
 
 graph_convergence(properties_constrained_converged,
                   properties_objective_varpoids_final_converged, 
@@ -315,14 +345,14 @@ graph_convergence(properties_constrained_converged,
                   min_transpersion,
                   max_transpersion)
 
-graph_kinmatics(properties_constrained_converged,
-                properties_objective_varpoids_final_converged,
-                properties_objective_varit_final_converged,
-                properties_unconstrained_converged,
-                states_constrained_converged,
-                states_objective_varpoids_final_converged,
-                states_objective_varit_final_converged,
-                states_unconstrained_converged,
+graph_kinmatics(properties_constrained_converged[idx_90_constrainted, :],
+                properties_objective_varpoids_final_converged[idx_90_varpoids_final, :],
+                properties_objective_varit_final_converged[idx_90_varit_final, :],
+                properties_unconstrained_converged[idx_90_unconstrainted, :],
+                states_constrained_converged[idx_90_constrainted, :],
+                states_objective_varpoids_final_converged[idx_90_varpoids_final, :],
+                states_objective_varit_final_converged[idx_90_varit_final, :],
+                states_unconstrained_converged[idx_90_unconstrainted, :],
                 max_cost,
                 min_cost,
                 nb_shooting)
