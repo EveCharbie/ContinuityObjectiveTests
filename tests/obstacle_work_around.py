@@ -1,23 +1,24 @@
-# import argparse
+import argparse
 import logging
 
 import biorbd
 from bioptim import Bounds, QAndQDotBounds, NoisedInitialGuess
 import numpy as np
 
-from tests import test_constraint, test_objective, test_all_objectives
+from tests import test_constraint, test_objective, test_all_objectives, test_unconstrained
 
 DEBUG_FLAG = False
 
 if DEBUG_FLAG:
     class Arguments:
         def __init__(self):
-            self.iters1 = 1000000
-            self.iters2 = 1000
+            self.type = "unconstrained"
+            self.idx_random = 0
+            self.var = "varshere"
+            self.iters1 = 10000
+            self.iters2 = 10000
             self.weight = 1000000
             self.weight_sphere = 100
-            self.idx_random = 0
-            self.type = "unconstrained"
 
     args = Arguments()
 
@@ -28,8 +29,8 @@ else:
 
     parser = argparse.ArgumentParser("Run test for a particular case.")
     parser.add_argument("type", action="store", help="type of test (constraint or objective)")
-    parser.add_argument("n", action="store", type=int, help="number of the test")
-    parser.add_argument("--var", action="store", type=str, help="what is the variable in this run (varit or varpoids)")
+    parser.add_argument("idx_random", action="store", type=int, help="number of the test")
+    parser.add_argument("--var", action="store", type=str, help="what is the variable in this run (varit or varpoids or varsphere)")
     parser.add_argument(
         "--iters1", action="store", required=True, type=int, help="maximum number of iterations allowed on first pass"
     )
@@ -37,7 +38,7 @@ else:
         "--iters2", action="store", required=False, type=int, help="maximum number of iterations allowed on second pass"
     )
     parser.add_argument("--weight", action="store", required=False, type=float, help="weight of continuity objective")
-    parser.add_argument("--sphere_weight", action="store", required=False, type=float, help="weight of sphere collision objective")
+    parser.add_argument("--weight_sphere", action="store", required=False, type=float, help="weight of sphere collision objective")
 
     args = parser.parse_args()
 
@@ -62,12 +63,9 @@ def prepare_u_bounds(biorbd_model):
 seed = 42
 np.random.seed(seed)
 
-if DEBUG_FLAG:
-    biorbd_model_path = "../models/pendulum_maze.bioMod"
-    sol_dir = "../solutions/"
-else:
-    biorbd_model_path = "models/pendulum_maze.bioMod"
-    sol_dir = "solutions/"
+biorbd_model_path = "../models/pendulum_maze.bioMod"
+sol_dir = "../solutions/"
+
 biorbd_model = biorbd.Model(biorbd_model_path)
 nb_q = biorbd_model.nbQ()
 nb_qdot = biorbd_model.nbQdot()
@@ -75,7 +73,7 @@ nb_tau = biorbd_model.nbGeneralizedTorque()
 
 n_shooting = 500
 final_time = 5
-n_threads = 4
+n_threads = 32
 
 x_bounds = prepare_x_bounds(biorbd_model)
 u_bounds = prepare_u_bounds(biorbd_model)
@@ -158,7 +156,7 @@ elif args.type == "unconstrained":
         f"n_threads={n_threads}..."
     )
 
-    test_all_objectives(
+    test_unconstrained(
         biorbd_model_path,
         final_time,
         n_shooting,
@@ -167,7 +165,9 @@ elif args.type == "unconstrained":
         x_inits[args.idx_random],
         u_inits[args.idx_random],
         args.idx_random,
+        args.var,
         args.iters1,
+        args.iters2,
         args.weight,
         args.weight_sphere,
         sol_dir,

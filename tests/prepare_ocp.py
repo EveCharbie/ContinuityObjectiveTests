@@ -61,7 +61,7 @@ def prepare_ocp_first_pass(
     weight,
     ode_solver: OdeSolver = OdeSolver.RK4(),
     use_sx: bool = True,
-    n_threads: int = 1,
+    n_threads: int = 32,
 ) -> OptimalControlProgram:
     """
     The initialization of an ocp
@@ -91,7 +91,7 @@ def prepare_ocp_first_pass(
     # Add objective functions
     objective_functions = ObjectiveList()
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, weight=1, key="tau")
-    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100)
+    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100, max_bound=2)
 
     # Dynamics
     dynamics = Dynamics(DynamicsFcn.TORQUE_DRIVEN)
@@ -128,10 +128,11 @@ def prepare_ocp_second_pass(
     x_bounds,
     u_bounds,
     solution: Solution,
-    ode_solver: OdeSolver = OdeSolver.RK4(),
+    ode_solver: OdeSolver = OdeSolver.RK4(n_integration_steps=15),
     use_sx: bool = True,
-    n_threads: int = 1,
+    n_threads: int = 32,
 ) -> OptimalControlProgram:
+
     """
     The initialization of an ocp
 
@@ -156,7 +157,7 @@ def prepare_ocp_second_pass(
     # Add objective functions
     objective_functions = ObjectiveList()
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, weight=1, key="tau")
-    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100)
+    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100, max_bound=2)
 
     # Dynamics
     dynamics = Dynamics(DynamicsFcn.TORQUE_DRIVEN)
@@ -205,7 +206,7 @@ def prepare_ocp_all_objectives(
     weight_sphere,
     ode_solver: OdeSolver = OdeSolver.RK4(),
     use_sx: bool = True,
-    n_threads: int = 1,
+    n_threads: int = 32,
 ) -> OptimalControlProgram:
     """
     The initialization of an ocp
@@ -235,13 +236,13 @@ def prepare_ocp_all_objectives(
     # Add objective functions
     objective_functions = ObjectiveList()
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, weight=1, key="tau")
-    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=False, y=0.05, z=0, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=False, y=0.55, z=-0.85, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=False, y=0.75, z=0.2, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=False, y=-0.45, z=0, limit=0.35,)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=False, y=1.4, z=0.5, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=False, y=2, z=1.2, limit=0.35)
+    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100, max_bound=2)
+    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.05, z=0, limit=0.35)
+    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.55, z=-0.85, limit=0.35)
+    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.75, z=0.2, limit=0.35)
+    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=-0.45, z=0, limit=0.35,)
+    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=1.4, z=0.5, limit=0.35)
+    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=2, z=1.2, limit=0.35)
 
     # Dynamics
     dynamics = Dynamics(DynamicsFcn.TORQUE_DRIVEN)

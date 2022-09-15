@@ -1,6 +1,7 @@
 import logging
 import pickle
 import time
+from IPython import embed
 
 from bioptim import OdeSolver, Solver, CostType
 
@@ -37,10 +38,13 @@ def test_constraint(
     solver = Solver.IPOPT()
     solver.set_maximum_iterations(max_iteration)
     sol = ocp.solve(solver)
+    sol.detailed_cost_values()
 
     del sol.ocp
     sol.case = i
     sol.max_iter = max_iteration
+    sol.total_time = sol.real_time_to_optimize
+    sol.detailed_cost = sol.detailed_cost
 
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     filename = "constraint-{sol_index}-{timestamp}.pickle".format(sol_index=i, timestamp=timestamp)
@@ -72,7 +76,7 @@ def test_objective(
     n_threads: int = 1,
 ):
     logging.info(f"Running objective test {i} with weight={weight} and max_iteration_first={max_iteration_first}...")
-    start = time.time()
+    # start = time.time()
     ocp = prepare_ocp_first_pass(
         biorbd_model_path,
         final_time,
@@ -88,6 +92,7 @@ def test_objective(
     solver = Solver.IPOPT()
     solver.set_maximum_iterations(max_iteration_first)
     sol1 = ocp.solve(solver)
+    sol1.detailed_cost_values()
 
     del sol1.ocp
     sol1.var = var
@@ -95,20 +100,24 @@ def test_objective(
     sol1.max_iter_first = max_iteration_first
     sol1.max_iter_second = max_iteration_second
     sol1.case = i
+    sol1.detailed_cost = sol1.detailed_cost
 
     ocp = prepare_ocp_second_pass(biorbd_model_path, x_bounds, u_bounds, sol1, n_threads=n_threads)
     solver = Solver.IPOPT()
     solver.set_maximum_iterations(max_iteration_second)
     sol2 = ocp.solve(solver)
-    stop = time.time()
+    sol2.detailed_cost_values()
+    # stop = time.time()
 
+    total_real_time_to_optimize_2 = sol2.ocp.real_time_to_optimize
     del sol2.ocp
     sol2.var = var
     sol2.weight = weight
     sol2.max_iter_first = max_iteration_first
     sol2.max_iter_second = max_iteration_second
     sol2.case = i
-    sol2.total_time = stop - start
+    sol2.total_time = sol1.real_time_to_optimize + sol2.real_time_to_optimize # stop - start
+    sol.detailed_cost = sol.detailed_cost
 
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     filename = "objective-{var}-initial-{sol_index}-{weight}-{max_iters}-{timestamp}.pickle".format(
@@ -150,7 +159,7 @@ def test_all_objectives(
     n_threads: int = 1,
 ):
     logging.info(f"Running all objective test {i} with weight={weight} and max_iteration_first={max_iteration_first}...")
-    start = time.time()
+    # start = time.time()
     ocp = prepare_ocp_all_objectives(
         biorbd_model_path,
         final_time,
@@ -170,21 +179,109 @@ def test_all_objectives(
     solver = Solver.IPOPT(show_online_optim=True)
     solver.set_maximum_iterations(max_iteration_first)
     sol1 = ocp.solve(solver)
-    stop = time.time()
+    sol.detailed_cost_values()
+    # stop = time.time()
 
     # sol1.graphs(show_bounds=True)
     sol1.animate()
 
     del sol1.ocp
-    sol1.time = stop - start
+    sol1.total_time = sol1.real_time_to_optimize # stop - start
+    sol1.detailed_cost = sol1.detailed_cost
 
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    filename = "unconstrained-{sol_index}-{weight}-{weight_sphere}-{max_iters}-{timestamp}.pickle".format(
+    filename = "all_objectives-{sol_index}-{weight}-{weight_sphere}-{max_iters}-{timestamp}.pickle".format(
         sol_index=i, weight=weight, weight_sphere=weight_sphere, max_iters=max_iteration_first, timestamp=timestamp
     )
     try:
         with open(sol_dir + filename, "wb") as f:
             pickle.dump(sol1, f)
+        logging.info(f"Saved solution {i} to '{sol_dir + filename}'.")
+    except:
+        logging.exception(f"Error when saving solution {i} to '{sol_dir + filename}'.")
+
+
+def test_unconstrained(
+    biorbd_model_path: str,
+    final_time: float,
+    n_shooting: int,
+    x_bounds,
+    u_bounds,
+    x_init,
+    u_init,
+    i,
+    var,
+    max_iteration_first,
+    max_iteration_second,
+    weight,
+    weight_sphere,
+    sol_dir,
+    ode_solver: OdeSolver = OdeSolver.RK4(),
+    n_threads: int = 1,
+):
+    logging.info(f"Running unconstrained test {i} with weight={weight} and weight_sphere={weight_sphere}...")
+    # start = time.time()
+
+    ocp = prepare_ocp_all_objectives(
+        biorbd_model_path,
+        final_time,
+        n_shooting,
+        x_bounds,
+        u_bounds,
+        x_init,
+        u_init,
+        weight,
+        weight_sphere)
+
+    solver = Solver.IPOPT()
+    solver.set_maximum_iterations(max_iteration_first)
+    sol1 = ocp.solve(solver)
+    sol1.detailed_cost_values()
+
+    del sol1.ocp
+    sol1.var = var
+    sol1.weight = weight
+    sol1.weight_sphere = weight_sphere
+    sol1.max_iter_first = max_iteration_first
+    sol1.max_iter_second = max_iteration_second
+    sol1.case = i
+    sol1.detailed_cost = sol1.detailed_cost
+
+    ocp = prepare_ocp_second_pass(biorbd_model_path, x_bounds, u_bounds, sol1, n_threads=n_threads)
+    solver = Solver.IPOPT()
+    solver.set_maximum_iterations(max_iteration_second)
+    sol2 = ocp.solve(solver)
+    sol2.detailed_cost_values()
+    # stop = time.time()
+
+    del sol2.ocp
+    sol2.var = var
+    sol2.weight = weight
+    sol2.weight_sphere = weight_sphere
+    sol2.max_iter_first = max_iteration_first
+    sol2.max_iter_second = max_iteration_second
+    sol2.case = i
+    sol2.total_time = sol1.real_time_to_optimize + sol2.real_time_to_optimize # stop - start
+    sol2.detailed_cost = sol2.detailed_cost
+
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+
+    filename = "unconstrained-{var}-initial-{sol_index}-{weight}-{weight_sphere}-{max_iters}-{timestamp}.pickle".format(
+        var=var, sol_index=i, weight=weight, weight_sphere=weight_sphere, max_iters=max_iteration_first, timestamp=timestamp
+    )
+    try:
+        with open(sol_dir + filename, "wb") as f:
+            pickle.dump(sol1, f)
+        logging.info(f"Saved solution {i} to '{sol_dir + filename}'.")
+    except:
+        logging.exception(f"Error when saving solution {i} to '{sol_dir + filename}'.")
+
+    filename = "unconstrained-{var}-final-{sol_index}-{weight}-{weight_sphere}-{max_iters}-{timestamp}.pickle".format(
+        var=var, sol_index=i, weight=weight, weight_sphere=weight_sphere, max_iters=max_iteration_first, timestamp=timestamp
+    )
+    try:
+        with open(sol_dir + filename, "wb") as f:
+            pickle.dump(sol2, f)
         logging.info(f"Saved solution {i} to '{sol_dir + filename}'.")
     except:
         logging.exception(f"Error when saving solution {i} to '{sol_dir + filename}'.")
