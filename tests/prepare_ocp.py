@@ -95,11 +95,11 @@ def prepare_ocp_unconstrained(
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, weight=1, key="tau")
     objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100, max_bound=2)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.05, z=0, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.55, z=-0.85, limit=0.35)
+    # objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.55, z=-0.85, limit=0.35)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.75, z=0.2, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=-0.45, z=0, limit=0.35,)
+    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=-0.95, z=0, limit=0.35,)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=1.4, z=0.5, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=2, z=1.2, limit=0.35)
+    # objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=2, z=1.2, limit=0.35)
 
     # Dynamics
     dynamics = Dynamics(DynamicsFcn.TORQUE_DRIVEN)
@@ -170,11 +170,11 @@ def prepare_ocp_objective_shpere(
     constraints = ConstraintList()
     constraints.add(ConstraintFcn.SUPERIMPOSE_MARKERS, node=Node.END, first_marker="marker_2", second_marker="target_2")
     constraints.add(out_of_sphere_constraint, y=0.05, z=0, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
-    constraints.add(out_of_sphere_constraint, y=0.55, z=-0.85, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
+    # constraints.add(out_of_sphere_constraint, y=0.55, z=-0.85, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
     constraints.add(out_of_sphere_constraint, y=0.75, z=0.2, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
-    constraints.add(out_of_sphere_constraint, y=-0.45, z=0, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
+    constraints.add(out_of_sphere_constraint, y=-0.95, z=0, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
     constraints.add(out_of_sphere_constraint, y=1.4, z=0.5, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
-    constraints.add(out_of_sphere_constraint, y=2, z=1.2, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
+    # constraints.add(out_of_sphere_constraint, y=2, z=1.2, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
 
     return OptimalControlProgram(
         biorbd_model,
@@ -236,11 +236,11 @@ def prepare_ocp_objective_continuity(
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, weight=1, key="tau")
     objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100, max_bound=2)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.05, z=0, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.55, z=-0.85, limit=0.35)
+    # objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.55, z=-0.85, limit=0.35)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.75, z=0.2, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=-0.45, z=0, limit=0.35,)
+    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=-0.95, z=0, limit=0.35,)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=1.4, z=0.5, limit=0.35)
-    objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=2, z=1.2, limit=0.35)
+    # objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=2, z=1.2, limit=0.35)
 
     # Dynamics
     dynamics = Dynamics(DynamicsFcn.TORQUE_DRIVEN)
@@ -306,11 +306,11 @@ def prepare_ocp_constrained(
     constraints = ConstraintList()
     constraints.add(ConstraintFcn.SUPERIMPOSE_MARKERS, node=Node.END, first_marker="marker_2", second_marker="target_2")
     constraints.add(out_of_sphere_constraint, y=0.05, z=0, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
-    constraints.add(out_of_sphere_constraint, y=0.55, z=-0.85, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
+    # constraints.add(out_of_sphere_constraint, y=0.55, z=-0.85, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
     constraints.add(out_of_sphere_constraint, y=0.75, z=0.2, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
-    constraints.add(out_of_sphere_constraint, y=-0.45, z=0, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
+    constraints.add(out_of_sphere_constraint, y=-0.95, z=0, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
     constraints.add(out_of_sphere_constraint, y=1.4, z=0.5, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
-    constraints.add(out_of_sphere_constraint, y=2, z=1.2, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
+    # constraints.add(out_of_sphere_constraint, y=2, z=1.2, min_bound=0.35, max_bound=np.inf, node=Node.ALL_SHOOTING)
 
     return OptimalControlProgram(
         biorbd_model,
