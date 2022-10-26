@@ -5,7 +5,7 @@ import biorbd
 from bioptim import Bounds, QAndQDotBounds, NoisedInitialGuess
 import numpy as np
 
-from tests import test_constraint, test_objective, test_all_objectives, test_unconstrained
+from tests import test_constraint, test_objective_sphere, test_objective_continuity, test_unconstrained
 
 DEBUG_FLAG = False
 
@@ -14,7 +14,6 @@ if DEBUG_FLAG:
         def __init__(self):
             self.type = "unconstrained"
             self.idx_random = 0
-            self.var = "varshere"
             self.iters1 = 10000
             self.iters2 = 10000
             self.weight = 1000000
@@ -30,7 +29,6 @@ else:
     parser = argparse.ArgumentParser("Run test for a particular case.")
     parser.add_argument("type", action="store", help="type of test (constraint or objective)")
     parser.add_argument("idx_random", action="store", type=int, help="number of the test")
-    parser.add_argument("--var", action="store", type=str, help="what is the variable in this run (varit or varpoids or varsphere)")
     parser.add_argument(
         "--iters1", action="store", required=True, type=int, help="maximum number of iterations allowed on first pass"
     )
@@ -72,14 +70,14 @@ nb_qdot = biorbd_model.nbQdot()
 nb_tau = biorbd_model.nbGeneralizedTorque()
 
 n_shooting = 500
-final_time = 5
-n_threads = 32
+final_time = 2
+n_threads = 1 # 32
 
 x_bounds = prepare_x_bounds(biorbd_model)
 u_bounds = prepare_u_bounds(biorbd_model)
 
 x_inits = [
-    NoisedInitialGuess([0] * (nb_q + nb_qdot), bounds=x_bounds, noise_magnitude=0.001, n_shooting=n_shooting)
+    NoisedInitialGuess([0] * (nb_q + nb_qdot), bounds=x_bounds, noise_magnitude=0.5, n_shooting=n_shooting)
     for _ in range(100)
 ]
 u_inits = [
@@ -87,9 +85,40 @@ u_inits = [
     for _ in range(100)
 ]
 
-if args.type == "objective":
+if args.type == "unconstrained":
     logging.info(
-        f"Testing continuity objective "
+        f"Testing all objectives (no contraints) "
+        f"seed={seed} "
+        f"final_time={final_time} "
+        f"n_shooting={n_shooting} "
+        f"iters1={args.iters1} "
+        f"weight={args.weight} "
+        f"weight_sphere={args.weight_sphere} "
+        f"n_threads={n_threads}..."
+    )
+
+    test_unconstrained(
+        biorbd_model_path,
+        final_time,
+        n_shooting,
+        x_bounds,
+        u_bounds,
+        x_inits[args.idx_random],
+        u_inits[args.idx_random],
+        args.idx_random,
+        args.iters1,
+        args.iters2,
+        args.weight,
+        args.weight_sphere,
+        sol_dir,
+        n_threads=n_threads,
+    )
+
+    logging.info("Done, Good Bye!")
+
+elif args.type == "objective_sphere":
+    logging.info(
+        f"Testing continuity as objective, sphere as constraints "
         f"seed={seed} "
         f"final_time={final_time} "
         f"n_shooting={n_shooting} "
@@ -99,7 +128,7 @@ if args.type == "objective":
         f"n_threads={n_threads}..."
     )
 
-    test_objective(
+    test_objective_sphere(
         biorbd_model_path,
         final_time,
         n_shooting,
@@ -108,10 +137,39 @@ if args.type == "objective":
         x_inits[args.idx_random],
         u_inits[args.idx_random],
         args.idx_random,
-        args.var,
         args.iters1,
         args.iters2,
         args.weight,
+        sol_dir,
+        n_threads=n_threads,
+    )
+
+    logging.info("Done, Good Bye!")
+
+elif args.type == "objective_continuity":
+    logging.info(
+        f"Testing continuity as objective, sphere as constraints "
+        f"seed={seed} "
+        f"final_time={final_time} "
+        f"n_shooting={n_shooting} "
+        f"iters1={args.iters1} "
+        f"iters2={args.iters2} "
+        f"weight_sphere={args.weight_sphere} "
+        f"n_threads={n_threads}..."
+    )
+
+    test_objective_continuity(
+        biorbd_model_path,
+        final_time,
+        n_shooting,
+        x_bounds,
+        u_bounds,
+        x_inits[args.idx_random],
+        u_inits[args.idx_random],
+        args.idx_random,
+        args.iters1,
+        args.iters2,
+        args.weight_sphere,
         sol_dir,
         n_threads=n_threads,
     )
@@ -138,38 +196,6 @@ elif args.type == "constraint":
         u_inits[args.idx_random],
         args.idx_random,
         args.iters1,
-        sol_dir,
-        n_threads=n_threads,
-    )
-
-    logging.info("Done, Good Bye!")
-
-elif args.type == "unconstrained":
-    logging.info(
-        f"Testing all objectives (no contraints) "
-        f"seed={seed} "
-        f"final_time={final_time} "
-        f"n_shooting={n_shooting} "
-        f"iters1={args.iters1} "
-        f"weight={args.weight} "
-        f"weight_sphere={args.weight_sphere} "
-        f"n_threads={n_threads}..."
-    )
-
-    test_unconstrained(
-        biorbd_model_path,
-        final_time,
-        n_shooting,
-        x_bounds,
-        u_bounds,
-        x_inits[args.idx_random],
-        u_inits[args.idx_random],
-        args.idx_random,
-        args.var,
-        args.iters1,
-        args.iters2,
-        args.weight,
-        args.weight_sphere,
         sol_dir,
         n_threads=n_threads,
     )
