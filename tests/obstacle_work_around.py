@@ -7,15 +7,16 @@ import numpy as np
 
 from tests import test_constraint, test_objective_sphere, test_objective_continuity, test_unconstrained
 
-DEBUG_FLAG = False
+DEBUG_FLAG = True # False
+SOLVER_FLAG = "SQP_method"
 
 if DEBUG_FLAG:
     class Arguments:
         def __init__(self):
             self.type = "unconstrained"
             self.idx_random = 0
-            self.iters1 = 10000
-            self.iters2 = 10000
+            self.iters1 = 1
+            self.iters2 = 10
             self.weight = 1000000
             self.weight_sphere = 100
 
@@ -62,7 +63,10 @@ seed = 42
 np.random.seed(seed)
 
 biorbd_model_path = "../models/pendulum_maze.bioMod"
-sol_dir = "../solutions/"
+if SOLVER_FLAG == "IPOPT":
+    sol_dir = "../solutions_IPOPT/"
+if SOLVER_FLAG == "SQP_method":
+    sol_dir = "../solutions_SQPmethod/"
 
 biorbd_model = biorbd.Model(biorbd_model_path)
 nb_q = biorbd_model.nbQ()
@@ -112,6 +116,7 @@ if args.type == "unconstrained":
         args.weight_sphere,
         sol_dir,
         n_threads=n_threads,
+        SOLVER_FLAG=SOLVER_FLAG,
     )
 
     logging.info("Done, Good Bye!")
@@ -142,7 +147,8 @@ elif args.type == "objective_sphere":
         args.weight,
         sol_dir,
         n_threads=n_threads,
-    )
+        SOLVER_FLAG=SOLVER_FLAG,
+        )
 
     logging.info("Done, Good Bye!")
 
@@ -172,7 +178,8 @@ elif args.type == "objective_continuity":
         args.weight_sphere,
         sol_dir,
         n_threads=n_threads,
-    )
+        SOLVER_FLAG=SOLVER_FLAG,
+        )
 
     logging.info("Done, Good Bye!")
 
@@ -198,6 +205,7 @@ elif args.type == "constraint":
         args.iters1,
         sol_dir,
         n_threads=n_threads,
+        SOLVER_FLAG=SOLVER_FLAG,
     )
 
     logging.info("Done, Good Bye!")
