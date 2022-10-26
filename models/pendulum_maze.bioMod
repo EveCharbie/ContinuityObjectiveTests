@@ -104,3 +104,11 @@ segment NoGoCircle6
 	meshcolor 0.9 0.24 0.2
 	meshrt 0 0 0 xyz 0 $y6 $z6
 endsegment
+
+segment Rail
+	mesh 0 -2 0
+	mesh 0 2 0
+endsegment
+
+
+
