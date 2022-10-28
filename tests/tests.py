@@ -25,6 +25,7 @@ def test_unconstrained(
     sol_dir,
     ode_solver: OdeSolver = OdeSolver.RK4(),
     n_threads: int = 1,
+    SOLVER_FLAG: str = "IPOPT",
 ):
     logging.info(f"Running unconstrained test {i} with weight={weight} and weight_sphere={weight_sphere}...")
     # start = time.time()
@@ -42,9 +43,14 @@ def test_unconstrained(
         ode_solver=ode_solver,
         n_threads=n_threads)
 
-    solver = Solver.IPOPT()
-    solver.set_maximum_iterations(max_iteration_first)
-    # solver.set_linear_solver("ma57")
+    if SOLVER_FLAG == "IPOPT":
+        solver = Solver.IPOPT()
+        solver.set_maximum_iterations(max_iteration_first)
+    elif SOLVER_FLAG == "SQP_method":
+        solver = Solver.SQP_METHOD()
+        solver.set_maximum_iterations(max_iteration_first)
+        solver.set_qpsol("qrqp")
+
     sol1 = ocp.solve(solver)
     sol1.detailed_cost_values()
 
@@ -63,9 +69,15 @@ def test_unconstrained(
     final_time = sol1.parameters["time"][0][0]
 
     ocp = prepare_ocp_constrained(biorbd_model_path, final_time, n_shooting, x_bounds, u_bounds, x_init, u_init, n_threads=n_threads)
-    solver = Solver.IPOPT()
-    solver.set_maximum_iterations(max_iteration_second)
-    # solver.set_linear_solver("ma57")
+
+    if SOLVER_FLAG == "IPOPT":
+        solver = Solver.IPOPT()
+        solver.set_maximum_iterations(max_iteration_second)
+    elif SOLVER_FLAG == "SQP_method":
+        solver = Solver.SQP_METHOD()
+        solver.set_maximum_iterations(max_iteration_second)
+        solver.set_qpsol("qrqp")
+
     sol2 = ocp.solve(solver)
     sol2.detailed_cost_values()
     # stop = time.time()
@@ -117,6 +129,7 @@ def test_objective_sphere(
     sol_dir,
     ode_solver: OdeSolver = OdeSolver.RK4(),
     n_threads: int = 1,
+	SOLVER_FLAG: str = "IPOPT",
 ):
     logging.info(f"Running objective test {i} with weight={weight} and max_iteration_first={max_iteration_first}...")
     # start = time.time()
@@ -132,9 +145,14 @@ def test_objective_sphere(
         ode_solver=ode_solver,
         n_threads=n_threads,
     )
-    solver = Solver.IPOPT()
-    solver.set_maximum_iterations(max_iteration_first)
-    # solver.set_linear_solver("ma57")
+    if SOLVER_FLAG == "IPOPT":
+        solver = Solver.IPOPT()
+        solver.set_maximum_iterations(max_iteration_first)
+    elif SOLVER_FLAG == "SQP_method":
+        solver = Solver.SQP_METHOD()
+        solver.set_maximum_iterations(max_iteration_first)
+        solver.set_qpsol("qrqp")
+
     sol1 = ocp.solve(solver)
     sol1.detailed_cost_values()
 
@@ -152,9 +170,15 @@ def test_objective_sphere(
     final_time = sol1.parameters["time"][0][0]
 
     ocp = prepare_ocp_constrained(biorbd_model_path, final_time, n_shooting, x_bounds, u_bounds, x_init, u_init, n_threads=n_threads)
-    solver = Solver.IPOPT()
-    solver.set_maximum_iterations(max_iteration_second)
-    # solver.set_linear_solver("ma57")
+
+    if SOLVER_FLAG == "IPOPT":
+        solver = Solver.IPOPT()
+        solver.set_maximum_iterations(max_iteration_second)
+    elif SOLVER_FLAG == "SQP_method":
+        solver = Solver.SQP_METHOD()
+        solver.set_maximum_iterations(max_iteration_second)
+        solver.set_qpsol("qrqp")
+
     sol2 = ocp.solve(solver)
     sol2.detailed_cost_values()
     # stop = time.time()
@@ -204,6 +228,7 @@ def test_objective_continuity(
     sol_dir,
     ode_solver: OdeSolver = OdeSolver.RK4(),
     n_threads: int = 1,
+    SOLVER_FLAG: str = "IPOPT",
 ):
     logging.info(f"Running objective test {i} with weight_sphere={weight_sphere} and max_iteration_first={max_iteration_first}...")
     # start = time.time()
@@ -219,9 +244,14 @@ def test_objective_continuity(
         ode_solver=ode_solver,
         n_threads=n_threads,
     )
-    solver = Solver.IPOPT()
-    solver.set_maximum_iterations(max_iteration_first)
-    # solver.set_linear_solver("ma57")
+    if SOLVER_FLAG == "IPOPT":
+        solver = Solver.IPOPT()
+        solver.set_maximum_iterations(max_iteration_first)
+    elif SOLVER_FLAG == "SQP_method":
+        solver = Solver.SQP_METHOD()
+        solver.set_maximum_iterations(max_iteration_first)
+        solver.set_qpsol("qrqp")
+
     sol1 = ocp.solve(solver)
     sol1.detailed_cost_values()
 
@@ -239,9 +269,15 @@ def test_objective_continuity(
     final_time = sol1.parameters["time"][0][0]
 
     ocp = prepare_ocp_constrained(biorbd_model_path, final_time, n_shooting, x_bounds, u_bounds, x_init, u_init, n_threads=n_threads)
-    solver = Solver.IPOPT()
-    solver.set_maximum_iterations(max_iteration_second)
-    # solver.set_linear_solver("ma57")
+    
+    if SOLVER_FLAG == "IPOPT":
+        solver = Solver.IPOPT()
+        solver.set_maximum_iterations(max_iteration_second)
+    elif SOLVER_FLAG == "SQP_method":
+        solver = Solver.SQP_METHOD()
+        solver.set_maximum_iterations(max_iteration_second)
+        solver.set_qpsol("qrqp")
+
     sol2 = ocp.solve(solver)
     sol2.detailed_cost_values()
     # stop = time.time()
@@ -289,6 +325,7 @@ def test_constraint(
     sol_dir,
     ode_solver: OdeSolver = OdeSolver.RK4(),
     n_threads: int = 1,
+    SOLVER_FLAG: str = "IPOPT",
 ):
     logging.info(f"Running constraint test {i}...")
     ocp = prepare_ocp_constrained(
@@ -302,9 +339,14 @@ def test_constraint(
         ode_solver=ode_solver,
         n_threads=n_threads,
     )
-    solver = Solver.IPOPT()
-    solver.set_maximum_iterations(max_iteration)
-    # solver.set_linear_solver("ma57")
+    if SOLVER_FLAG == "IPOPT":
+        solver = Solver.IPOPT()
+        solver.set_maximum_iterations(max_iteration)
+    elif SOLVER_FLAG == "SQP_method":
+        solver = Solver.SQP_METHOD()
+        solver.set_maximum_iterations(max_iteration)
+        solver.set_qpsol("qrqp")
+
     sol = ocp.solve(solver)
     sol.detailed_cost_values()
 

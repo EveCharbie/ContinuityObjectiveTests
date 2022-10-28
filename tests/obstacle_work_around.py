@@ -14,10 +14,11 @@ if DEBUG_FLAG:
         def __init__(self):
             self.type = "unconstrained"
             self.idx_random = 0
-            self.iters1 = 10000
-            self.iters2 = 10000
+            self.iters1 = 1
+            self.iters2 = 10
             self.weight = 1000000
             self.weight_sphere = 100
+            self.SOLVER_FLAG = "SQP_method"
 
     args = Arguments()
 
@@ -37,6 +38,8 @@ else:
     )
     parser.add_argument("--weight", action="store", required=False, type=float, help="weight of continuity objective")
     parser.add_argument("--weight_sphere", action="store", required=False, type=float, help="weight of sphere collision objective")
+    parser.add_argument("--solver", action="store", required=False, type=float,
+                        help="solver being used (SQP_method or IPOPT)")
 
     args = parser.parse_args()
 
@@ -62,7 +65,6 @@ seed = 42
 np.random.seed(seed)
 
 biorbd_model_path = "../models/pendulum_maze.bioMod"
-sol_dir = "../solutions/"
 
 biorbd_model = biorbd.Model(biorbd_model_path)
 nb_q = biorbd_model.nbQ()
@@ -71,7 +73,7 @@ nb_tau = biorbd_model.nbGeneralizedTorque()
 
 n_shooting = 500
 final_time = 2
-n_threads = 1 # 32
+n_threads = 1
 
 x_bounds = prepare_x_bounds(biorbd_model)
 u_bounds = prepare_u_bounds(biorbd_model)
@@ -94,8 +96,15 @@ if args.type == "unconstrained":
         f"iters1={args.iters1} "
         f"weight={args.weight} "
         f"weight_sphere={args.weight_sphere} "
-        f"n_threads={n_threads}..."
+        f"n_threads={n_threads}"
+        f"solver={args.solver}..."
+
     )
+
+    if args.solver == "IPOPT":
+        sol_dir = "../solutions_IPOPT/"
+    if args.solver == "SQP_method":
+        sol_dir = "../solutions_SQPmethod/"
 
     test_unconstrained(
         biorbd_model_path,
@@ -112,6 +121,7 @@ if args.type == "unconstrained":
         args.weight_sphere,
         sol_dir,
         n_threads=n_threads,
+        SOLVER_FLAG=args.solver,
     )
 
     logging.info("Done, Good Bye!")
@@ -125,8 +135,15 @@ elif args.type == "objective_sphere":
         f"iters1={args.iters1} "
         f"iters2={args.iters2} "
         f"weight={args.weight} "
-        f"n_threads={n_threads}..."
+        f"n_threads={n_threads}"
+        f"solver={args.solver}..."
+
     )
+
+    if args.solver == "IPOPT":
+        sol_dir = "../solutions_IPOPT/"
+    if args.solver == "SQP_method":
+        sol_dir = "../solutions_SQPmethod/"
 
     test_objective_sphere(
         biorbd_model_path,
@@ -142,7 +159,8 @@ elif args.type == "objective_sphere":
         args.weight,
         sol_dir,
         n_threads=n_threads,
-    )
+        SOLVER_FLAG=args.solver,
+        )
 
     logging.info("Done, Good Bye!")
 
@@ -155,8 +173,15 @@ elif args.type == "objective_continuity":
         f"iters1={args.iters1} "
         f"iters2={args.iters2} "
         f"weight_sphere={args.weight_sphere} "
-        f"n_threads={n_threads}..."
+        f"n_threads={n_threads}"
+        f"solver={args.solver}..."
+
     )
+
+    if args.solver == "IPOPT":
+        sol_dir = "../solutions_IPOPT/"
+    if args.solver == "SQP_method":
+        sol_dir = "../solutions_SQPmethod/"
 
     test_objective_continuity(
         biorbd_model_path,
@@ -172,7 +197,8 @@ elif args.type == "objective_continuity":
         args.weight_sphere,
         sol_dir,
         n_threads=n_threads,
-    )
+        SOLVER_FLAG=args.solver,
+        )
 
     logging.info("Done, Good Bye!")
 
@@ -183,8 +209,15 @@ elif args.type == "constraint":
         f"final_time={final_time} "
         f"n_shooting={n_shooting} "
         f"iters1={args.iters1} "
-        f"n_threads={n_threads}..."
+        f"n_threads={n_threads}"
+        f"solver={args.solver}..."
+
     )
+
+    if args.solver == "IPOPT":
+        sol_dir = "../solutions_IPOPT/"
+    if args.solver == "SQP_method":
+        sol_dir = "../solutions_SQPmethod/"
 
     test_constraint(
         biorbd_model_path,
@@ -198,6 +231,7 @@ elif args.type == "constraint":
         args.iters1,
         sol_dir,
         n_threads=n_threads,
+        SOLVER_FLAG=args.solver,
     )
 
     logging.info("Done, Good Bye!")
