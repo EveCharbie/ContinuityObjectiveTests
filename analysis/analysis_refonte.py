@@ -12,17 +12,16 @@ def extract_data_sol(m, filename, data_sol):
     
     # 0: type_ 
     # 1: case
-    # 2: var
-    # 3: phase
-    # 4: case
-    # 5: weight
-    # 6: iter_
-    # 7: weight_sphere
-    # 8: time (time of the trial)
-    # 9: cost
-    # 10: time_opt (time spent in the solver)
-    # 11: status
-    # 12: transpersion
+    # 2: phase
+    # 3: case
+    # 4: weight
+    # 5: iter_
+    # 6: weight_sphere
+    # 7: time (time of the trial)
+    # 8: cost
+    # 9: time_opt (time spent in the solver)
+    # 10: status
+    # 11: transpersion
     
     filename = filename.split("-")
 
@@ -34,33 +33,42 @@ def extract_data_sol(m, filename, data_sol):
     status = data_sol.status
     transpersion = compute_transpersion(m, states, controls, time, nb_shooting)
 
-    if filename[0] == "objective":
-        type_, var, phase, case, weight, iter_ = filename[0], filename[1], filename[2], filename[3], filename[4], filename[5]
+    if filename[0] == "unconstrained":
+        type_, phase, case, weight, iter_, weight_sphere = filename[0], filename[1], filename[2], filename[3], filename[4], filename[5]
+        case = int(case)
+        return np.array([type_, case, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
+
+    elif filename[0] == "objective_sphere":
+        type_, phase, case, weight, iter_ = filename[0], filename[1], filename[2], filename[3], filename[4]
         weight_sphere = None
         case = int(case)
-        if weight == "1000.0":
-            weight = "1K"
-        elif weight == "1000000.0":
-            weight = "1M"
-        elif weight == "1000000000.0":
-            weight = "1G"
-        iter_ = int(iter_)
-        # return dict(type=type_, var=var, phase=phase, case=case, weight=weight, iter=iter_, states=states, controls=controls, time=time, cost=cost, time_opt=time_opt, transpersion=transpersion)
-        return np.array([type_, case, var, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
+        # if weight == "1000.0":
+        #     weight = "1K"
+        # elif weight == "1000000.0":
+        #     weight = "1M"
+        # elif weight == "1000000000.0":
+        #     weight = "1G"
+        # iter_ = int(iter_)
+        return np.array([type_, case, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
 
-    elif filename[0] == "constraint":
+    elif filename[0] == "objective_continuity":
+        type_, phase, case, weight_sphere, iter_ = filename[0], filename[1], filename[2], filename[3], filename[4]
+        weight = None
+        case = int(case)
+        # if weight == "1000.0":
+        #     weight = "1K"
+        # elif weight == "1000000.0":
+        #     weight = "1M"
+        # elif weight == "1000000000.0":
+        #     weight = "1G"
+        # iter_ = int(iter_)
+        return np.array([type_, case, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
+
+    if filename[0] == "constraint":
         type_, case = filename[0], filename[1]
-        var, phase, weight, iter_, weight_sphere = None, None, None, None, None
+        phase, weight, iter_, weight_sphere = None, None, None, None
         case = int(case)
-        # return dict(type=type_, case=case, states=states, controls=controls, time=time, cost=cost, time_opt=time_opt, transpersion=transpersion)
-        return np.array([type_, case, var, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
-
-    elif filename[0] == "unconstrained":
-        type_, case, weight, iter_, weight_sphere = filename[0], filename[1], filename[2], filename[3], filename[4]
-        var, phase = None, None
-        case = int(case)
-        # return dict(type=type_, case=case, weight=weight, iter=iter_, weight_sphere=weight_sphere, states=states, controls=controls, time=time, cost=cost, time_opt=time_opt, transpersion=transpersion)
-        return np.array([type_, case, var, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
+        return np.array([type_, case, phase, case, weight, iter_, weight_sphere, time, cost, time_opt, status, transpersion]), states, controls
 
     else:
         raise Exception(filename)
@@ -137,8 +145,8 @@ def compute_transpersion(m, x, u, t, nb_shooting):
 
 
 def graph_convergence(properties_constrained_converged, 
-                      properties_objective_varpoids_final_converged, 
-                      properties_objective_varit_final_converged, 
+                      properties_objective_sphere_final_converged, 
+                      properties_objective_continuity_final_converged, 
                       properties_unconstrained_converged,
                       min_transpersion,
                       max_transpersion):
@@ -146,24 +154,24 @@ def graph_convergence(properties_constrained_converged,
     fig, ax = plt.subplots(nrows=2, ncols=2)
     ax = ax.ravel()
     plt_0 = ax[0].scatter(properties_constrained_converged[:, 9], properties_constrained_converged[:, 10], c=properties_constrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Constrained')
-    plt_1 = ax[1].scatter(properties_objective_varpoids_final_converged[:, 9], properties_objective_varpoids_final_converged[:, 10], c=properties_objective_varpoids_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Objective')
-    plt_2 = ax[2].scatter(properties_objective_varit_final_converged[:, 9], properties_objective_varit_final_converged[:, 10], c=properties_objective_varit_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.')
+    plt_1 = ax[1].scatter(properties_objective_sphere_final_converged[:, 9], properties_objective_sphere_final_converged[:, 10], c=properties_objective_sphere_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Objective')
+    plt_2 = ax[2].scatter(properties_objective_continuity_final_converged[:, 9], properties_objective_continuity_final_converged[:, 10], c=properties_objective_continuity_final_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.')
     plt_3 = ax[3].scatter(properties_unconstrained_converged[:, 9], properties_unconstrained_converged[:, 10], c=properties_unconstrained_converged[:, 12], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Unconstrained')
     ax[0].errorbar(np.mean(properties_constrained_converged[:, 9]), np.mean(properties_constrained_converged[:, 10]),
                    xerr=np.std(properties_constrained_converged[:, 9]), yerr=np.std(properties_constrained_converged[:, 10]),
                    color=np.mean(properties_constrained_converged[:, 12]))
-    ax[1].errorbar(np.mean(properties_objective_varpoids_final_converged[:, 9]), np.mean(properties_objective_varpoids_final_converged[:, 10]),
-                   xerr=np.std(properties_objective_varpoids_final_converged[:, 9]), yerr=np.std(properties_objective_varpoids_final_converged[:, 10]),
-                   color=np.mean(properties_objective_varpoids_final_converged[:, 12]))
-    ax[2].errorbar(np.mean(properties_objective_varit_final_converged[:, 9]), np.mean(properties_objective_varit_final_converged[:, 10]),
-                   xerr=np.std(properties_objective_varit_final_converged[:, 9]), yerr=np.std(properties_objective_varit_final_converged[:, 10]),
-                   color=np.mean(properties_objective_varit_final_converged[:, 12]))
+    ax[1].errorbar(np.mean(properties_objective_sphere_final_converged[:, 9]), np.mean(properties_objective_sphere_final_converged[:, 10]),
+                   xerr=np.std(properties_objective_sphere_final_converged[:, 9]), yerr=np.std(properties_objective_sphere_final_converged[:, 10]),
+                   color=np.mean(properties_objective_sphere_final_converged[:, 12]))
+    ax[2].errorbar(np.mean(properties_objective_continuity_final_converged[:, 9]), np.mean(properties_objective_continuity_final_converged[:, 10]),
+                   xerr=np.std(properties_objective_continuity_final_converged[:, 9]), yerr=np.std(properties_objective_continuity_final_converged[:, 10]),
+                   color=np.mean(properties_objective_continuity_final_converged[:, 12]))
     ax[3].errorbar(np.mean(properties_unconstrained_converged[:, 9]), np.mean(properties_unconstrained_converged[:, 10]),
                    xerr=np.std(properties_unconstrained_converged[:, 9]), yerr=np.std(properties_unconstrained_converged[:, 10]),
                    color=np.mean(properties_unconstrained_converged[:, 12]))
     ax[0].set_title("Constrained")
-    ax[1].set_title("Objective var poinds")
-    ax[2].set_title("Objective var iterations")
+    ax[1].set_title("Objective sphere")
+    ax[2].set_title("Objective continuity")
     ax[3].set_title("Unconstrained")
 
     plt.xlabel("Cost")
@@ -180,12 +188,12 @@ def graph_convergence(properties_constrained_converged,
 
 
 def graph_kinmatics(properties_constrained_converged, 
-                    properties_objective_varpoids_final_converged, 
-                    properties_objective_varit_final_converged, 
+                    properties_objective_sphere_final_converged, 
+                    properties_objective_continuity_final_converged, 
                     properties_unconstrained_converged,
                     states_constrained_converged,
-                    states_objective_varpoids_final_converged,
-                    states_objective_varit_final_converged,
+                    states_objective_sphere_final_converged,
+                    states_objective_continuity_final_converged,
                     states_unconstrained_converged,    
                     max_cost, 
                     min_cost,
@@ -212,8 +220,8 @@ def graph_kinmatics(properties_constrained_converged,
     fig.subplots_adjust(top=0.8, right=0.75)
 
     plot_lines('Constraint', (0, (1, 1)), properties_constrained_converged, states_constrained_converged, nb_shooting, cmap, ax)
-    plot_lines('Objective (varpoids)', (0, (5, 1)), properties_objective_varpoids_final_converged, states_objective_varpoids_final_converged, nb_shooting, cmap, ax)
-    plot_lines('Objective (varit)', (0, (5, 1)), properties_objective_varit_final_converged, states_objective_varit_final_converged, nb_shooting, cmap, ax)
+    plot_lines('Objective (sphere)', (0, (5, 1)), properties_objective_sphere_final_converged, states_objective_sphere_final_converged, nb_shooting, cmap, ax)
+    plot_lines('Objective (continuity)', (0, (5, 1)), properties_objective_continuity_final_converged, states_objective_continuity_final_converged, nb_shooting, cmap, ax)
     plot_lines('Unconstrained', 'solid', properties_unconstrained_converged, states_unconstrained_converged, nb_shooting, cmap, ax)
 
     ax[1].set_xlabel("Time")
@@ -236,7 +244,7 @@ MEAN_FLAG = False
 HISTOGRAM_FLAG = False
 
 # directory = "../solutions/mini_folder"
-# directory = "../solutions/smaller_folder"
+# directory = "../solutions/small_folder"
 directory = "../solutions"
 
 nb_shooting = 500
@@ -262,96 +270,104 @@ for filename in os.listdir(directory):
 # Sort the files loaded + print convergence rate
 properties_constrained = properties_all[np.where(properties_all[:, 0] == "constraint"), :][0]
 states_constrained = states_all[:, :, np.where(properties_all[:, 0] == "constraint")][:, :, 0, :]
-constrained_index_converged = np.where(properties_constrained[:, 11] == 0)
+constrained_index_converged = np.where(properties_constrained[:, 10] == 0)
 properties_constrained_converged = properties_constrained[constrained_index_converged, :][0]
 states_constrained_converged = states_constrained[:, :, constrained_index_converged][:, :, 0, :]
 constrained_convergence_rate = len(constrained_index_converged[0]) / len(properties_constrained) * 100
 print("Convergence rate fully constrained OCP : ", constrained_convergence_rate, "%")
 
-properties_objective = properties_all[np.where(properties_all[:, 0] == "objective"), :][0]
-states_objective = states_all[:, :, np.where(properties_all[:, 0] == "objective")][:, :, 0, :]
-properties_objective_varpoids = properties_objective[np.where(properties_objective[:, 2] == "varpoids"), :][0]
-states_objective_varpoids = states_objective[:, :, np.where(properties_objective[:, 2] == "varpoids")][:, :, 0, :]
-properties_objective_varit = properties_objective[np.where(properties_objective[:, 2] == "varit"), :][0]
-states_objective_varit = states_objective[:, :, np.where(properties_objective[:, 2] == "varit")][:, :, 0, :]
-properties_objective_varpoids_initial = properties_objective_varpoids[np.where(properties_objective_varpoids[:, 3] == "initial"), :][0]
-states_objective_varpoids_initial = states_objective_varpoids[:, :, np.where(properties_objective_varpoids[:, 3] == "initial")][:, :, 0, :]
-properties_objective_varpoids_final = properties_objective_varpoids[np.where(properties_objective_varpoids[:, 3] == "final"), :][0]
-states_objective_varpoids_final = states_objective_varpoids[:, :, np.where(properties_objective_varpoids[:, 3] == "final")][:, :, 0, :]
-properties_objective_varit_initial = properties_objective_varit[np.where(properties_objective_varit[:, 3] == "initial"), :][0]
-states_objective_varit_initial = states_objective_varit[:, :, np.where(properties_objective_varit[:, 3] == "initial")][:, :, 0, :]
-properties_objective_varit_final = properties_objective_varit[np.where(properties_objective_varit[:, 3] == "final"), :][0]
-states_objective_varit_final = states_objective_varit[:, :, np.where(properties_objective_varit[:, 3] == "final")][:, :, 0, :]
-#### varopt ???
-objective_varpoids_initial_index_converged = np.where(properties_objective_varpoids_initial[:, 11] == 0)
-properties_objective_varpoids_initial_converged = properties_objective_varpoids_initial[objective_varpoids_initial_index_converged, :][0]
-states_objective_varpoids_initial_converged = states_objective_varpoids_initial[:, :, objective_varpoids_initial_index_converged][:, :, 0, :]
-objective_varpoids_initial_convergence_rate = len(objective_varpoids_initial_index_converged[0]) / len(properties_objective_varpoids_initial) * 100
-print("Convergence rate objective->constraint OCP (varpoids) initial step : ", objective_varpoids_initial_convergence_rate, "%")
-objective_varpoids_final_index_converged = np.where(properties_objective_varpoids_final[:, 11] == 0)
-properties_objective_varpoids_final_converged = properties_objective_varpoids_final[objective_varpoids_final_index_converged, :][0]
-states_objective_varpoids_final_converged = states_objective_varpoids_final[:, :, objective_varpoids_final_index_converged][:, :, 0, :]
-objective_varpoids_final_convergence_rate = len(objective_varpoids_final_index_converged[0]) / len(properties_objective_varpoids_final) * 100
-print("Convergence rate objective->constraint OCP (varpoids) final step : ", objective_varpoids_final_convergence_rate, "%")
-objective_varit_initial_index_converged = np.where(properties_objective_varit_initial[:, 11] == 0)
-properties_objective_varit_initial_converged = properties_objective_varit_initial[objective_varit_initial_index_converged, :][0]
-states_objective_varit_initial_converged = states_objective_varit_initial[:, :, objective_varit_initial_index_converged][:, :, 0, :]
-objective_varit_initial_convergence_rate = len(objective_varit_initial_index_converged[0]) / len(properties_objective_varit_initial) * 100
-print("Convergence rate objective->constraint OCP (varit) initial step : ", objective_varit_initial_convergence_rate, "%")
-objective_varit_final_index_converged = np.where(properties_objective_varit_final[:, 11] == 0)
-properties_objective_varit_final_converged = properties_objective_varit_final[objective_varit_final_index_converged, :][0]
-states_objective_varit_final_converged = states_objective_varit_final[:, :, objective_varit_final_index_converged][:, :, 0, :]
-objective_varit_final_convergence_rate = len(objective_varit_final_index_converged[0]) / len(properties_objective_varit_final) * 100
-print("Convergence rate objective->constraint OCP (varit) final step : ", objective_varit_final_convergence_rate, "%")
+
+properties_objective_sphere = properties_all[np.where(properties_all[:, 0] == "objective_sphere"), :][0]
+states_objective_sphere = states_all[:, :, np.where(properties_all[:, 0] == "objective_sphere")][:, :, 0, :]
+properties_objective_sphere_initial = properties_objective_sphere[np.where(properties_objective_sphere[:, 2] == "initial"), :][0]
+states_objective_sphere_initial = states_objective_sphere[:, :, np.where(properties_objective_sphere[:, 2] == "initial")][:, :, 0, :]
+properties_objective_sphere_final = properties_objective_sphere[np.where(properties_objective_sphere[:, 2] == "final"), :][0]
+states_objective_sphere_final = states_objective_sphere[:, :, np.where(properties_objective_sphere[:, 2] == "final")][:, :, 0, :]
+objective_sphere_initial_index_converged = np.where(properties_objective_sphere_initial[:, 10] == 0)
+properties_objective_sphere_initial_converged = properties_objective_sphere_initial[objective_sphere_initial_index_converged, :][0]
+states_objective_sphere_initial_converged = states_objective_sphere_initial[:, :, objective_sphere_initial_index_converged][:, :, 0, :]
+objective_sphere_initial_convergence_rate = len(objective_sphere_initial_index_converged[0]) / len(properties_objective_sphere_initial) * 100
+print("Convergence rate objective_sphere->constraint OCP initial step : ", objective_sphere_initial_convergence_rate, "%")
+objective_sphere_final_index_converged = np.where(properties_objective_sphere_final[:, 10] == 0)
+properties_objective_sphere_final_converged = properties_objective_sphere_final[objective_sphere_final_index_converged, :][0]
+states_objective_sphere_final_converged = states_objective_sphere_final[:, :, objective_sphere_final_index_converged][:, :, 0, :]
+objective_sphere_final_convergence_rate = len(objective_sphere_final_index_converged[0]) / len(properties_objective_sphere_final) * 100
+print("Convergence rate objective_sphere->constraint OCP final step : ", objective_sphere_final_convergence_rate, "%")
+
+
+properties_objective_continuity = properties_all[np.where(properties_all[:, 0] == "objective_continuity"), :][0]
+states_objective_continuity = states_all[:, :, np.where(properties_all[:, 0] == "objective_continuity")][:, :, 0, :]
+properties_objective_continuity_initial = properties_objective_continuity[np.where(properties_objective_continuity[:, 2] == "initial"), :][0]
+states_objective_continuity_initial = states_objective_continuity[:, :, np.where(properties_objective_continuity[:, 2] == "initial")][:, :, 0, :]
+properties_objective_continuity_final = properties_objective_continuity[np.where(properties_objective_continuity[:, 2] == "final"), :][0]
+states_objective_continuity_final = states_objective_continuity[:, :, np.where(properties_objective_continuity[:, 2] == "final")][:, :, 0, :]
+objective_continuity_initial_index_converged = np.where(properties_objective_continuity_initial[:, 10] == 0)
+properties_objective_continuity_initial_converged = properties_objective_continuity_initial[objective_continuity_initial_index_converged, :][0]
+states_objective_continuity_initial_converged = states_objective_continuity_initial[:, :, objective_continuity_initial_index_converged][:, :, 0, :]
+objective_continuity_initial_convergence_rate = len(objective_continuity_initial_index_converged[0]) / len(properties_objective_continuity_initial) * 100
+print("Convergence rate objective_continuity->constraint OCP initial step : ", objective_continuity_initial_convergence_rate, "%")
+objective_continuity_final_index_converged = np.where(properties_objective_continuity_final[:, 10] == 0)
+properties_objective_continuity_final_converged = properties_objective_continuity_final[objective_continuity_final_index_converged, :][0]
+states_objective_continuity_final_converged = states_objective_continuity_final[:, :, objective_continuity_final_index_converged][:, :, 0, :]
+objective_continuity_final_convergence_rate = len(objective_continuity_final_index_converged[0]) / len(properties_objective_continuity_final) * 100
+print("Convergence rate objective_continuity->constraint OCP final step : ", objective_continuity_final_convergence_rate, "%")
+
 
 properties_unconstrained = properties_all[np.where(properties_all[:, 0] == "unconstrained"), :][0]
 states_unconstrained = states_all[:, :, np.where(properties_all[:, 0] == "unconstrained")][:, :, 0, :]
-unconstrained_index_converged = np.where(properties_unconstrained[:, 11] == 0)
-properties_unconstrained_converged = properties_unconstrained[unconstrained_index_converged, :][0]
-states_unconstrained_converged = states_unconstrained[:, :, unconstrained_index_converged][:, :, 0, :]
-unconstrained_convergence_rate = len(unconstrained_index_converged[0]) / len(properties_unconstrained) * 100
-print("Convergence rate fully unconstrained OCP : ", unconstrained_convergence_rate, "%")
+properties_unconstrained_initial = properties_unconstrained[np.where(properties_unconstrained[:, 2] == "initial"), :][0]
+states_unconstrained_initial = states_unconstrained[:, :, np.where(properties_unconstrained[:, 2] == "initial")][:, :, 0, :]
+properties_unconstrained_final = properties_unconstrained[np.where(properties_unconstrained[:, 2] == "final"), :][0]
+states_unconstrained_final = states_unconstrained[:, :, np.where(properties_unconstrained[:, 2] == "final")][:, :, 0, :]
+objective_continuity_initial_index_converged = np.where(properties_unconstrained_initial[:, 10] == 0)
+properties_unconstrained_initial_converged = properties_unconstrained_initial[objective_continuity_initial_index_converged, :][0]
+states_unconstrained_initial_converged = states_unconstrained_initial[:, :, objective_continuity_initial_index_converged][:, :, 0, :]
+objective_continuity_initial_convergence_rate = len(objective_continuity_initial_index_converged[0]) / len(properties_unconstrained_initial) * 100
+print("Convergence rate unconstrained->constraint OCP initial step : ", objective_continuity_initial_convergence_rate, "%")
+objective_continuity_final_index_converged = np.where(properties_unconstrained_final[:, 10] == 0)
+properties_unconstrained_final_converged = properties_unconstrained_final[objective_continuity_final_index_converged, :][0]
+states_unconstrained_final_converged = states_unconstrained_final[:, :, objective_continuity_final_index_converged][:, :, 0, :]
+objective_continuity_final_convergence_rate = len(objective_continuity_final_index_converged[0]) / len(properties_unconstrained_final) * 100
+print("Convergence rate unconstrained->constraint OCP final step : ", objective_continuity_final_convergence_rate, "%")
 
 
-properties_all_converged = properties_all[np.where(properties_all[:, 11] == 0), :][0]
+properties_all_converged = properties_all[np.where(properties_all[:, 10] == 0), :][0]
 
-max_cost = np.max(properties_all_converged[:, 9])
-# max_cost = np.sort(properties_all_converged[:, 9])[-3]
-min_cost = np.min(properties_all_converged[:, 9])
-max_time_to_optimize = np.max(properties_all_converged[:, 10])
-min_time_to_optimize = np.min(properties_all_converged[:, 10])
-max_transpersion = np.max(properties_all_converged[:, 12])
-# max_transpersion = np.sort(properties_all_converged[:, 12])[-3]
-min_transpersion = np.min(properties_all_converged[:, 12])
+max_cost = np.max(properties_all_converged[:, 8])
+min_cost = np.min(properties_all_converged[:, 8])
+max_time_to_optimize = np.max(properties_all_converged[:, 9])
+min_time_to_optimize = np.min(properties_all_converged[:, 9])
+max_transpersion = np.max(properties_all_converged[:, 11])
+min_transpersion = np.min(properties_all_converged[:, 11])
 
-cost_90th_percentile = np.percentile(properties_all_converged[:, 9], 90)
-idx_90_constrainted = np.where(properties_constrained_converged[:, 9] < cost_90th_percentile)
-idx_90_varpoids_final = np.where(properties_objective_varpoids_final_converged[:, 9] < cost_90th_percentile)
-idx_90_varit_final = np.where(properties_objective_varit_final_converged[:, 9] < cost_90th_percentile)
-idx_90_unconstrainted = np.where(properties_unconstrained_converged[:, 9] < cost_90th_percentile)
+cost_90th_percentile = np.percentile(properties_all_converged[:, 8], 90)
+idx_90_constrainted = np.where(properties_constrained_converged[:, 8] < cost_90th_percentile)
+idx_90_sphere_final = np.where(properties_objective_sphere_final_converged[:, 8] < cost_90th_percentile)
+idx_90_continuity_final = np.where(properties_unconstrained_final_converged[:, 8] < cost_90th_percentile)
+idx_90_unconstrainted_final = np.where(properties_unconstrained_final_converged[:, 8] < cost_90th_percentile)
 pourcentage_constrainted = len(idx_90_constrainted) / np.shape(properties_constrained_converged)[0] * 100
-pourcentage_varpoids_final = len(idx_90_varpoids_final) / np.shape(properties_varpoids_final_converged)[0] * 100
-pourcentage_varit_final = len(idx_90_varit_final) / np.shape(properties_varit_final_converged)[0] * 100
-pourcentage_unconstrainted = len(idx_90_unconstrainted) / np.shape(properties_unconstrainted_converged)[0] * 100
+pourcentage_sphere_final = len(idx_90_sphere_final) / np.shape(properties_objective_sphere_final_converged)[0] * 100
+pourcentage_continuity_final = len(idx_90_continuity_final) / np.shape(properties_unconstrained_final_converged)[0] * 100
+pourcentage_unconstrainted_final = len(idx_90_unconstrainted) / np.shape(properties_unconstrained_converged)[0] * 100
 print(f"{pourcentage_constrainted} % of the constrained solutions were below the 90th percentile for the cost function value")
-print(f"{pourcentage_varpoids_final} % of the objective (varpoids) solutions were below the 90th percentile for the cost function value")
-print(f"{pourcentage_varit_final} % of the objective (varit) solutions were below the 90th percentile for the cost function value")
-print(f"{pourcentage_unconstrainted} % of the unconstrained solutions were below the 90th percentile for the cost function value")
+print(f"{pourcentage_sphere_final} % of the objective_sphere solutions were below the 90th percentile for the cost function value")
+print(f"{pourcentage_continuity_final} % of the objective_continuity solutions were below the 90th percentile for the cost function value")
+print(f"{pourcentage_unconstrainted_final} % of the unconstrained solutions were below the 90th percentile for the cost function value")
 
 graph_convergence(properties_constrained_converged,
-                  properties_objective_varpoids_final_converged, 
-                  properties_objective_varit_final_converged, 
+                  properties_objective_sphere_final_converged, 
+                  properties_objective_continuity_final_converged, 
                   properties_unconstrained_converged,
                   min_transpersion,
                   max_transpersion)
 
 graph_kinmatics(properties_constrained_converged[idx_90_constrainted, :],
-                properties_objective_varpoids_final_converged[idx_90_varpoids_final, :],
-                properties_objective_varit_final_converged[idx_90_varit_final, :],
+                properties_objective_sphere_final_converged[idx_90_sphere_final, :],
+                properties_objective_continuity_final_converged[idx_90_continuity_final, :],
                 properties_unconstrained_converged[idx_90_unconstrainted, :],
                 states_constrained_converged[idx_90_constrainted, :],
-                states_objective_varpoids_final_converged[idx_90_varpoids_final, :],
-                states_objective_varit_final_converged[idx_90_varit_final, :],
+                states_objective_sphere_final_converged[idx_90_sphere_final, :],
+                states_objective_continuity_final_converged[idx_90_continuity_final, :],
                 states_unconstrained_converged[idx_90_unconstrainted, :],
                 max_cost,
                 min_cost,
@@ -382,7 +398,7 @@ graph_kinmatics(properties_constrained_converged[idx_90_constrainted, :],
 #     plot_hist(pax10K, final_phase_times[2], "Phase time distribution of final optimisation with 10000 initial iterations", "time (s)")
 #     plt.tight_layout()
 #     fig.suptitle("All weight 1M, 500 shootings, converged only")
-#     fig.savefig("../figures/final_varit.pdf")
+#     fig.savefig("../figures/final_continuity.pdf")
 #
 #     fig, ((cax100, tax100, pax100), (cax1K, tax1K, pax1K), (cax10K, tax10K, pax10K)) = plt.subplots(3, 3, figsize=(25, 15))
 #     plot_hist(cax100, initial_costs[0], "Costs distribution of initial optimisation with 100 initial iterations", "cost")
@@ -398,7 +414,7 @@ graph_kinmatics(properties_constrained_converged[idx_90_constrainted, :],
 #     plot_hist(pax10K, initial_phase_times[2], "Phase time distribution of initial optimisation with 10000 initial iterations", "time (s)")
 #     plt.tight_layout()
 #     fig.suptitle("All weight 1M, 500 shootings, converged only")
-#     fig.savefig("../figures/initial_varit.pdf")
+#     fig.savefig("../figures/initial_continuity.pdf")
 #
 #
 #
@@ -412,7 +428,7 @@ graph_kinmatics(properties_constrained_converged[idx_90_constrainted, :],
 #
 
 # import bioviz
-# viz = bioviz.Viz("../models/pendulum_maze.bioMod", show_floor=False)
+# viz = bioviz.Viz("models/pendulum_maze.bioMod", show_floor=False)
 # viz.load_movement(mincostinit.states["q"])
 # viz.exec()
 
