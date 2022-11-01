@@ -38,7 +38,7 @@ else:
     )
     parser.add_argument("--weight", action="store", required=False, type=float, help="weight of continuity objective")
     parser.add_argument("--weight_sphere", action="store", required=False, type=float, help="weight of sphere collision objective")
-    parser.add_argument("--solver", action="store", required=False, type=float,
+    parser.add_argument("--solver", action="store", required=False, type=str,
                         help="solver being used (SQP_method or IPOPT)")
 
     args = parser.parse_args()
@@ -72,7 +72,7 @@ nb_qdot = biorbd_model.nbQdot()
 nb_tau = biorbd_model.nbGeneralizedTorque()
 
 n_shooting = 500
-final_time = 2
+final_time = 5
 n_threads = 1
 
 x_bounds = prepare_x_bounds(biorbd_model)
