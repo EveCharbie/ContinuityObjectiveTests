@@ -79,7 +79,7 @@ x_bounds = prepare_x_bounds(biorbd_model)
 u_bounds = prepare_u_bounds(biorbd_model)
 
 x_inits = [
-    NoisedInitialGuess([0] * (nb_q + nb_qdot), bounds=x_bounds, noise_magnitude=0.5, n_shooting=n_shooting)
+    NoisedInitialGuess([0] * (nb_q + nb_qdot), bounds=x_bounds, noise_magnitude=0.05, n_shooting=n_shooting)
     for _ in range(100)
 ]
 u_inits = [
