@@ -7,18 +7,18 @@ import numpy as np
 
 from tests import test_constraint, test_objective_sphere, test_objective_continuity, test_unconstrained
 
-DEBUG_FLAG = False
+DEBUG_FLAG = True # False
 
 if DEBUG_FLAG:
     class Arguments:
         def __init__(self):
-            self.type = "unconstrained"
+            self.type = "constraint"
             self.idx_random = 0
             self.iters1 = 1
             self.iters2 = 10
             self.weight = 1000000
             self.weight_sphere = 100
-            self.SOLVER_FLAG = "SQP_method"
+            self.solver = "IPOPT"  # "SQP_method"
 
     args = Arguments()
 
