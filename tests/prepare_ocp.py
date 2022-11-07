@@ -93,7 +93,7 @@ def prepare_ocp_unconstrained(
     # Add objective functions
     objective_functions = ObjectiveList()
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, weight=1, key="tau")
-    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100, max_bound=2)
+    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.05, z=0, limit=0.35)
     # objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.55, z=-0.85, limit=0.35)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.75, z=0.2, limit=0.35)
@@ -162,7 +162,7 @@ def prepare_ocp_objective_shpere(
     # Add objective functions
     objective_functions = ObjectiveList()
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, weight=1, key="tau")
-    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100, max_bound=2)
+    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100)
 
     # Dynamics
     dynamics = Dynamics(DynamicsFcn.TORQUE_DRIVEN)
@@ -234,7 +234,7 @@ def prepare_ocp_objective_continuity(
     # Add objective functions
     objective_functions = ObjectiveList()
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, weight=1, key="tau")
-    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100, max_bound=2)
+    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.05, z=0, limit=0.35)
     # objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.55, z=-0.85, limit=0.35)
     objective_functions.add(out_of_sphere_objective, custom_type=ObjectiveFcn.Mayer, node=Node.ALL, weight=weight_sphere, quadratic=True, y=0.75, z=0.2, limit=0.35)
@@ -298,7 +298,7 @@ def prepare_ocp_constrained(
     # Add objective functions
     objective_functions = ObjectiveList()
     objective_functions.add(ObjectiveFcn.Lagrange.MINIMIZE_CONTROL, weight=1, key="tau")
-    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100, max_bound=2)
+    objective_functions.add(ObjectiveFcn.Mayer.MINIMIZE_TIME, weight=100)
 
     # Dynamics
     dynamics = Dynamics(DynamicsFcn.TORQUE_DRIVEN)

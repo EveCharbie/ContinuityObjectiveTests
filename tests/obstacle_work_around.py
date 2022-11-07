@@ -46,7 +46,7 @@ else:
 def prepare_x_bounds(biorbd_model):
     x_bounds = QAndQDotBounds(biorbd_model)
     x_bounds[:, 0] = 0
-    x_bounds[0, 2] = 0
+    x_bounds[0, 2] = 0 ### might be removed
     x_bounds[1, 2] = np.pi
 
     return x_bounds
@@ -79,7 +79,7 @@ x_bounds = prepare_x_bounds(biorbd_model)
 u_bounds = prepare_u_bounds(biorbd_model)
 
 x_inits = [
-    NoisedInitialGuess([0] * (nb_q + nb_qdot), bounds=x_bounds, noise_magnitude=0.05, n_shooting=n_shooting)
+    NoisedInitialGuess([0] * (nb_q + nb_qdot), bounds=x_bounds, noise_magnitude=0.001, n_shooting=n_shooting)
     for _ in range(100)
 ]
 u_inits = [
