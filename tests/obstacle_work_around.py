@@ -7,7 +7,7 @@ import numpy as np
 
 from tests import test_constraint, test_objective_sphere, test_objective_continuity, test_unconstrained
 
-DEBUG_FLAG = True # False
+DEBUG_FLAG = False
 
 if DEBUG_FLAG:
     class Arguments:
