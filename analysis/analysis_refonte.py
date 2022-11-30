@@ -9,7 +9,7 @@ from IPython import embed
 
 def compute_cost(states, controls, time):
     dt = time / 500
-    lagrange_min_controls = np.sum(1 * controls**2 * dt)
+    lagrange_min_controls = np.nansum(1 * controls**2 * dt)
     mayer_min_time = 100 * time
     return lagrange_min_controls + mayer_min_time
 
@@ -140,43 +140,66 @@ def graph_convergence(properties_constrained_converged,
                       properties_objective_sphere_final_converged, 
                       properties_objective_continuity_final_converged, 
                       properties_unconstrained_converged,
-                      min_transpersion,
+                      max_cost,
+                      max_time_to_optimize,
                       max_transpersion):
+
+    cmap = cm.get_cmap('viridis')
 
     fig, ax = plt.subplots(nrows=2, ncols=2)
     ax = ax.ravel()
-    plt_0 = ax[0].scatter(properties_constrained_converged[:, 8], properties_constrained_converged[:, 9], c=properties_constrained_converged[:, 11], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Constrained')
-    plt_1 = ax[1].scatter(properties_objective_sphere_final_converged[:, 8], properties_objective_sphere_final_converged[:, 9], c=properties_objective_sphere_final_converged[:, 11], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Objective')
-    plt_2 = ax[2].scatter(properties_objective_continuity_final_converged[:, 8], properties_objective_continuity_final_converged[:, 9], c=properties_objective_continuity_final_converged[:, 11], vmin=min_transpersion, vmax=max_transpersion, marker='.')
-    plt_3 = ax[3].scatter(properties_unconstrained_converged[:, 8], properties_unconstrained_converged[:, 9], c=properties_unconstrained_converged[:, 11], vmin=min_transpersion, vmax=max_transpersion, marker='.', label='Unconstrained')
-    ax[0].errorbar(np.mean(properties_constrained_converged[:, 8]), np.mean(properties_constrained_converged[:, 9]),
-                   xerr=np.std(properties_constrained_converged[:, 8]), yerr=np.std(properties_constrained_converged[:, 9]),
-                   color=np.mean(properties_constrained_converged[:, 11]))
-    ax[1].errorbar(np.mean(properties_objective_sphere_final_converged[:, 8]), np.mean(properties_objective_sphere_final_converged[:, 9]),
-                   xerr=np.std(properties_objective_sphere_final_converged[:, 8]), yerr=np.std(properties_objective_sphere_final_converged[:, 9]),
-                   color=np.mean(properties_objective_sphere_final_converged[:, 11]))
-    ax[2].errorbar(np.mean(properties_objective_continuity_final_converged[:, 8]), np.mean(properties_objective_continuity_final_converged[:, 9]),
-                   xerr=np.std(properties_objective_continuity_final_converged[:, 8]), yerr=np.std(properties_objective_continuity_final_converged[:, 9]),
-                   color=np.mean(properties_objective_continuity_final_converged[:, 11]))
-    ax[3].errorbar(np.mean(properties_unconstrained_converged[:, 8]), np.mean(properties_unconstrained_converged[:, 9]),
-                   xerr=np.std(properties_unconstrained_converged[:, 8]), yerr=np.std(properties_unconstrained_converged[:, 9]),
-                   color=np.mean(properties_unconstrained_converged[:, 11]))
+    plt_0 = ax[0].scatter(properties_constrained_converged[:, 7], properties_constrained_converged[:, 8], c=properties_constrained_converged[:, 10], vmin=0, vmax=max_transpersion, marker='.', label='Constrained', cmap='viridis')
+    plt_1 = ax[1].scatter(properties_objective_sphere_final_converged[:, 7], properties_objective_sphere_final_converged[:, 8], c=properties_objective_sphere_final_converged[:, 10], vmin=0, vmax=max_transpersion, marker='.', label='Objective', cmap='viridis')
+    plt_2 = ax[2].scatter(properties_objective_continuity_final_converged[:, 7], properties_objective_continuity_final_converged[:, 8], c=properties_objective_continuity_final_converged[:, 10], vmin=0, vmax=max_transpersion, marker='.', cmap='viridis')
+    if properties_unconstrained_converged is not None:
+        plt_3 = ax[3].scatter(properties_unconstrained_converged[:, 7], properties_unconstrained_converged[:, 8], c=properties_unconstrained_converged[:, 10], vmin=0, vmax=max_transpersion, marker='.', label='Unconstrained', cmap='viridis')
+    ax[0].errorbar(np.mean(properties_constrained_converged[:, 7]), np.mean(properties_constrained_converged[:, 8]),
+                   xerr=np.std(properties_constrained_converged[:, 7]), yerr=np.std(properties_constrained_converged[:, 8]),
+                   color=cmap(np.mean(properties_constrained_converged[:, 10]) / max_transpersion))
+    ax[1].errorbar(np.mean(properties_objective_sphere_final_converged[:, 7]), np.mean(properties_objective_sphere_final_converged[:, 8]),
+                   xerr=np.std(properties_objective_sphere_final_converged[:, 7]), yerr=np.std(properties_objective_sphere_final_converged[:, 8]),
+                   color=cmap(np.mean(properties_objective_sphere_final_converged[:, 10]) / max_transpersion))
+    ax[2].errorbar(np.mean(properties_objective_continuity_final_converged[:, 7]), np.mean(properties_objective_continuity_final_converged[:, 8]),
+                   xerr=np.std(properties_objective_continuity_final_converged[:, 7]), yerr=np.std(properties_objective_continuity_final_converged[:, 8]),
+                   color=cmap(np.mean(properties_objective_continuity_final_converged[:, 10]) / max_transpersion))
+    if properties_unconstrained_converged is not None:
+        ax[3].errorbar(np.mean(properties_unconstrained_converged[:, 7]), np.mean(properties_unconstrained_converged[:, 8]),
+                       xerr=np.std(properties_unconstrained_converged[:, 7]), yerr=np.std(properties_unconstrained_converged[:, 8]),
+                       color=cmap(np.mean(properties_unconstrained_converged[:, 10]) / max_transpersion))
     ax[0].set_title("Constrained")
     ax[1].set_title("Objective sphere")
     ax[2].set_title("Objective continuity")
     ax[3].set_title("Unconstrained")
 
-    plt.xlabel("Cost")
-    plt.ylabel("time to optimize")
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+    ax[0].set_xscale('log')
+    ax[0].set_yscale('log')
+    ax[1].set_xscale('log')
+    ax[1].set_yscale('log')
+    ax[2].set_xscale('log')
+    ax[2].set_yscale('log')
+    ax[3].set_xscale('log')
+    ax[3].set_yscale('log')
+
+    ax[0].set_xlim((1, max_cost))
+    ax[0].set_ylim((1, max_time_to_optimize))
+    ax[1].set_xlim((1, max_cost))
+    ax[1].set_ylim((1, max_time_to_optimize))
+    ax[2].set_xlim((1, max_cost))
+    ax[2].set_ylim((1, max_time_to_optimize))
+    ax[3].set_xlim((1, max_cost))
+    ax[3].set_ylim((1, max_time_to_optimize))
+
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.1, top=0.9, left=0.1)
+    fig.text(0.45, 0.01, "Cost", ha='center', va='center')
+    fig.text(0.015, 0.5, 'Time to optimize [s]', ha='center', va='center', rotation='vertical')
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.10), ncol=3, frameon=False)
     cbar = plt.colorbar(plt_0, ax=ax) # format=ticker.FuncFormatter(fmt)
-    cbar.set_label('Transpersion sum')
+    cbar.ax.set_title('Transpersion sum\n[m]')
     plt.savefig("../figures/convergence_info_graph.png", dpi=300)
     # plt.show()
     return
-
 
 
 def graph_kinmatics(properties_constrained_converged, 
@@ -196,11 +219,13 @@ def graph_kinmatics(properties_constrained_converged,
     def plot_lines(key_word, linestyle, properti, state, nb_shooting, cmap, ax):
 
         for i in range(np.shape(properti)[0]):
-            color = cmap(properti[i, 8] / (max_cost - min_cost))
-            time_vector = np.linspace(0, properti[i, 7], nb_shooting+1)
+            color = cmap(properti[i, 7] / (max_cost - min_cost))
+            time_vector = np.linspace(0, properti[i, 6], nb_shooting+1)
             if i == 0:
                 ax[0].plot(time_vector, state[0, :, i],
                            color=color, linestyle=linestyle, label=key_word)
+                ax[1].plot(time_vector, state[1, :, i],
+                           color=color, linestyle=linestyle)
             else:
                 ax[0].plot(time_vector, state[0, :, i],
                            color=color, linestyle=linestyle)
@@ -213,8 +238,8 @@ def graph_kinmatics(properties_constrained_converged,
 
     plot_lines('Constraint', (0, (1, 1)), properties_constrained_converged, states_constrained_converged, nb_shooting, cmap, ax)
     plot_lines('Objective (sphere)', (0, (5, 1)), properties_objective_sphere_final_converged, states_objective_sphere_final_converged, nb_shooting, cmap, ax)
-    plot_lines('Objective (continuity)', (0, (5, 1)), properties_objective_continuity_final_converged, states_objective_continuity_final_converged, nb_shooting, cmap, ax)
-    plot_lines('Unconstrained', 'solid', properties_unconstrained_converged, states_unconstrained_converged, nb_shooting, cmap, ax)
+    plot_lines('Objective (continuity)', 'solid', properties_objective_continuity_final_converged, states_objective_continuity_final_converged, nb_shooting, cmap, ax)
+    # plot_lines('Unconstrained', (0, (5, 1)), properties_unconstrained_converged, states_unconstrained_converged, nb_shooting, cmap, ax)
 
     ax[1].set_xlabel("Time")
     ax[0].legend(loc='upper center', bbox_to_anchor=(0.5, 1.35), ncol=2, frameon=False)
@@ -224,32 +249,93 @@ def graph_kinmatics(properties_constrained_converged,
     cbar = plt.colorbar(fake_plot_for_color, cax=cbar_ax)
     cbar.set_label('Cost')
     # cbar.ax.set_title('This i')
+    plt.savefig("../figures/kinematics_graph_90thpercentile.png", dpi=300)
+    # plt.show()
+    return
+
+
+def graph_kinmatics_each_good(properties_constrained_converged,
+                    properties_objective_sphere_final_converged,
+                    properties_objective_continuity_final_converged,
+                    properties_unconstrained_converged,
+                    states_constrained_converged,
+                    states_objective_sphere_final_converged,
+                    states_objective_continuity_final_converged,
+                    states_unconstrained_converged,
+                    max_cost,
+                    min_cost,
+                    nb_shooting):
+
+    max_time = max(np.max(properties_constrained_converged[:, 6]), np.max(properties_objective_sphere_final_converged[:, 6]), np.max(properties_objective_continuity_final_converged[:, 6]))
+    cmap = cm.get_cmap('viridis')
+
+    def plot_lines(key_word, linestyle, properti, state, nb_shooting, cmap, ax):
+
+        for i in range(np.shape(properti)[0]):
+            color = cmap(properti[i, 7] / (max_cost - min_cost))
+            time_vector = np.linspace(0, properti[i, 6], nb_shooting+1)
+            if i == 0:
+                ax[0].plot(time_vector, state[0, :, i],
+                           color=color, linestyle=linestyle, label=key_word)
+                ax[1].plot(time_vector, state[1, :, i],
+                           color=color, linestyle=linestyle)
+            else:
+                ax[0].plot(time_vector, state[0, :, i],
+                           color=color, linestyle=linestyle)
+                ax[1].plot(time_vector, state[1, :, i],
+                           color=color, linestyle=linestyle)
+                ax[0].set_xlim((0, max_time))
+                ax[0].set_ylim((-4, 4))
+                ax[1].set_xlim((0, max_time))
+                ax[1].set_ylim((-5, 5))
+        return
+
+    fig, ax = plt.subplots(2, 3, figsize=(12.5, 4))
+
+    for i in range(3):
+        plot_lines('Constraint', 'solid', properties_constrained_converged, states_constrained_converged, nb_shooting, cmap, ax[:, 0])
+        plot_lines('Objective (sphere)', 'solid', properties_objective_sphere_final_converged, states_objective_sphere_final_converged, nb_shooting, cmap, ax[:, 1])
+        plot_lines('Objective (continuity)', 'solid', properties_objective_continuity_final_converged, states_objective_continuity_final_converged, nb_shooting, cmap, ax[:, 2])
+        # plot_lines('Unconstrained', 'solid', properties_unconstrained_converged, states_unconstrained_converged, nb_shooting, cmap, ax)
+
+    ax[1, 0].set_xlabel("Time [s]", fontsize=12)
+    ax[1, 1].set_xlabel("Time [s]", fontsize=12)
+    ax[1, 2].set_xlabel("Time [s]", fontsize=12)
+    ax[0, 0].set_ylabel("Translation [m]", fontsize=12)
+    ax[1, 0].set_ylabel("Rotation [rad]", fontsize=12)
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.35), ncol=2, frameon=False)
+    ax[0, 0].tick_params(axis='x', bottom=False, labelbottom=False)
+    ax[0, 1].tick_params(axis='x', bottom=False, labelbottom=False)
+    ax[0, 2].tick_params(axis='x', bottom=False, labelbottom=False)
+    fake_plot_for_color = ax[0, 0].scatter(np.array([0]), np.array([0]), marker='.', c=np.array([min_cost]), vmin=min_cost, vmax=max_cost)
+    cbar_ax = fig.add_axes([0.93, 0.12, 0.02, 0.81])
+    cbar = plt.colorbar(fake_plot_for_color, cax=cbar_ax)
+    cbar.ax.set_title('Cost', fontsize=12)
+    plt.subplots_adjust(bottom=0.12, top=0.93, left=0.05, right=0.9, hspace=0.1, wspace=0.15)
     plt.savefig("../figures/kinematics_graph.png", dpi=300)
     # plt.show()
-
-
     return
+
 
 #########   Loading data   #########
 
-MEAN_FLAG = False
-HISTOGRAM_FLAG = False
+LOAD_DATA_FLAG = True
 
-# directory = "../solutions/mini_folder"
-# directory = "../solutions/small_folder"
-directory = "../solutions_IPOPT/small_folder"
+if LOAD_DATA_FLAG:
+    # directory = "../solutions/mini_folder"
+    # directory = "../solutions/small_folder"
+    directory = "../solutions_IPOPT"
 
-nb_shooting = 500
-m = biorbd.Model("../models/pendulum_maze.bioMod")
+    nb_shooting = 500
+    m = biorbd.Model("../models/pendulum_maze.bioMod")
 
-
-# loop over the files in the folder to load them
-properties_all = []
-states_all = []
-for filename in os.listdir(directory):
-    if filename[-7:] == ".pickle":
-        with open(f"{directory}/{filename}", "rb") as f:
-            data_sol = pickle.load(f)
+    # loop over the files in the folder to load them
+    properties_all = []
+    states_all = []
+    for filename in os.listdir(directory):
+        if filename[-7:] == ".pickle":
+            with open(f"{directory}/{filename}", "rb") as f:
+                data_sol = pickle.load(f)
             properties, states, _ = extract_data_sol(m, filename, data_sol)
             if np.shape(properties_all) == (0, ):
                 properties_all = properties
@@ -258,8 +344,17 @@ for filename in os.listdir(directory):
                 properties_all = np.vstack((properties_all, properties))
                 states_all = np.dstack((states_all, states))
             print(f"Loaded successfully {filename}")
+    
+    with open('data.pkl', 'wb') as file:
+        data = [properties_all, states_all]
+        pickle.dump(data, file)
+else:
+    file = open('data.pkl', 'rb')
+    data = pickle.load(file)
+    properties_all = data[0]
+    states_all = data[1]
 
-embed()
+
 # Sort the files loaded + print convergence rate
 properties_constrained = properties_all[np.where(properties_all[:, 0] == "constraint"), :][0]
 states_constrained = states_all[:, :, np.where(properties_all[:, 0] == "constraint")][:, :, 0, :]
@@ -323,6 +418,7 @@ states_unconstrained_final_converged = states_unconstrained_final[:, :, objectiv
 objective_continuity_final_convergence_rate = len(objective_continuity_final_index_converged[0]) / len(properties_unconstrained_final) * 100
 print("Convergence rate unconstrained->constraint OCP final step : ", objective_continuity_final_convergence_rate, "%")
 
+embed()
 
 properties_all_converged = properties_all[np.where(properties_all[:, 9] == 0), :][0]
 
@@ -333,103 +429,85 @@ min_time_to_optimize = np.min(properties_all_converged[:, 8])
 max_transpersion = np.max(properties_all_converged[:, 10])
 min_transpersion = np.min(properties_all_converged[:, 10])
 
+# 90th percentile pf the cost value
 cost_90th_percentile = np.percentile(properties_all_converged[:, 7], 90)
-idx_90_constrainted = np.where(properties_constrained_converged[:, 7] < cost_90th_percentile)
-idx_90_sphere_final = np.where(properties_objective_sphere_final_converged[:, 7] < cost_90th_percentile)
-idx_90_continuity_final = np.where(properties_unconstrained_final_converged[:, 7] < cost_90th_percentile)
-idx_90_unconstrainted_final = np.where(properties_unconstrained_final_converged[:, 7] < cost_90th_percentile)
-pourcentage_constrainted = len(idx_90_constrainted) / np.shape(properties_constrained_converged)[0] * 100
-pourcentage_sphere_final = len(idx_90_sphere_final) / np.shape(properties_objective_sphere_final_converged)[0] * 100
-pourcentage_continuity_final = len(idx_90_continuity_final) / np.shape(properties_unconstrained_final_converged)[0] * 100
-pourcentage_unconstrainted_final = len(idx_90_unconstrainted) / np.shape(properties_unconstrained_converged)[0] * 100
-print(f"{pourcentage_constrainted} % of the constrained solutions were below the 90th percentile for the cost function value")
-print(f"{pourcentage_sphere_final} % of the objective_sphere solutions were below the 90th percentile for the cost function value")
-print(f"{pourcentage_continuity_final} % of the objective_continuity solutions were below the 90th percentile for the cost function value")
-print(f"{pourcentage_unconstrainted_final} % of the unconstrained solutions were below the 90th percentile for the cost function value")
+idx_90_constrainted = np.where(properties_constrained_converged[:, 7] <= cost_90th_percentile)[0]
+idx_90_sphere_final = np.where(properties_objective_sphere_final_converged[:, 7] <= cost_90th_percentile)[0]
+idx_90_continuity_final = np.where(properties_objective_continuity_final_converged[:, 7] <= cost_90th_percentile)[0]
+# idx_90_unconstrainted_final = np.where(properties_unconstrained_final_converged[:, 7] <= cost_90th_percentile)[0]
+
+# 5th percentile of the transpersion value
+transpersion_5th_percentile = np.percentile(properties_all_converged[:, 10], 5)
+idx_5_constrainted = np.where(properties_constrained_converged[:, 10] <= transpersion_5th_percentile)[0]
+idx_5_sphere_final = np.where(properties_objective_sphere_final_converged[:, 10] <= transpersion_5th_percentile)[0]
+idx_5_continuity_final = np.where(properties_objective_continuity_final_converged[:, 10] <= transpersion_5th_percentile)[0]
+# idx_5_unconstrainted_final = np.where(properties_unconstrained_final_converged[:, 10] <= transpersion_5th_percentile)[0]
+
+# 90th percentile pf the cost value AND 5th percentile of the transpersion
+idx_good_constrainted = np.intersect1d(idx_90_constrainted, idx_5_constrainted)
+idx_good_sphere_final = np.intersect1d(idx_90_sphere_final, idx_5_sphere_final)
+idx_good_continuity_final = np.intersect1d(idx_90_continuity_final, idx_5_continuity_final)
+# idx_good_unconstrainted_final = np.intersect1d(idx_90_unconstrainted_final, idx_5_unconstrainted_final)
+
+pourcentage_cost_constrainted = len(idx_90_constrainted) / np.shape(properties_constrained_converged)[0] * 100
+pourcentage_cost_sphere_final = len(idx_90_sphere_final) / np.shape(properties_objective_sphere_final_converged)[0] * 100
+pourcentage_cost_continuity_final = len(idx_90_continuity_final) / np.shape(properties_objective_continuity_final_converged)[0] * 100
+# pourcentage_cost_unconstrainted_final = len(idx_90_unconstrainted) / np.shape(properties_unconstrained_converged)[0] * 100
+print(f"{pourcentage_cost_constrainted} % of the constrained solutions were below the 90th percentile for the cost function value")
+print(f"{pourcentage_cost_sphere_final} % of the objective_sphere solutions were below the 90th percentile for the cost function value")
+print(f"{pourcentage_cost_continuity_final} % of the objective_continuity solutions were below the 90th percentile for the cost function value")
+# print(f"{pourcentage_cost_unconstrainted_final} % of the unconstrained solutions were below the 90th percentile for the cost function value")
+
+pourcentage_transpersion_constrainted = len(idx_5_constrainted) / np.shape(properties_constrained_converged)[0] * 100
+pourcentage_transpersion_sphere_final = len(idx_5_sphere_final) / np.shape(properties_objective_sphere_final_converged)[0] * 100
+pourcentage_transpersion_continuity_final = len(idx_5_continuity_final) / np.shape(properties_objective_continuity_final_converged)[0] * 100
+# pourcentage_unconstrainted_final = len(idx_5_unconstrainted) / np.shape(properties_unconstrained_converged)[0] * 100
+print(f"{pourcentage_transpersion_constrainted} % of the constrained solutions were below the 5th percentile for the transpersion value")
+print(f"{pourcentage_transpersion_sphere_final} % of the objective_sphere solutions were below the 5th percentile for the transpersion value")
+print(f"{pourcentage_transpersion_continuity_final} % of the objective_continuity solutions were below the 5th percentile for the transpersion value")
+# print(f"{pourcentage_transpersion_unconstrainted_final} % of the unconstrained solutions were below the 5th percentile for the transersion value")
+
+pourcentage_good_constrainted = len(idx_good_constrainted) / np.shape(properties_constrained_converged)[0] * 100
+pourcentage_good_sphere_final = len(idx_good_sphere_final) / np.shape(properties_objective_sphere_final_converged)[0] * 100
+pourcentage_good_continuity_final = len(idx_good_continuity_final) / np.shape(properties_objective_continuity_final_converged)[0] * 100
+# pourcentage_good_unconstrainted_final = len(idx_good_unconstrainted_final) / np.shape(properties_unconstrained_converged)[0] * 100
+print(f"{pourcentage_good_constrainted} % of the constrained solutions were below the 90th percentile for the cost function value and viable (transpersion=0)")
+print(f"{pourcentage_good_sphere_final} % of the objective_sphere solutions were below the 90th percentile for the cost function value and viable (transpersion=0)")
+print(f"{pourcentage_good_continuity_final} % of the objective_continuity solutions were below the 90th percentile for the cost function value and viable (transpersion=0)")
+# print(f"{pourcentage_good_unconstrainted_final} % of the unconstrained solutions were below the 90th percentile for the cost function value and viable (transpersion=0)")
+
 
 graph_convergence(properties_constrained_converged,
                   properties_objective_sphere_final_converged, 
                   properties_objective_continuity_final_converged, 
-                  properties_unconstrained_converged,
-                  min_transpersion,
+                  None, # properties_unconstrained_converged,
+                  max_cost,
+                  max_time_to_optimize,
                   max_transpersion)
 
-graph_kinmatics(properties_constrained_converged[idx_90_constrainted, :],
-                properties_objective_sphere_final_converged[idx_90_sphere_final, :],
-                properties_objective_continuity_final_converged[idx_90_continuity_final, :],
-                properties_unconstrained_converged[idx_90_unconstrainted, :],
-                states_constrained_converged[idx_90_constrainted, :],
-                states_objective_sphere_final_converged[idx_90_sphere_final, :],
-                states_objective_continuity_final_converged[idx_90_continuity_final, :],
-                states_unconstrained_converged[idx_90_unconstrainted, :],
-                max_cost,
+# graph_kinmatics(properties_constrained_converged[idx_90_constrainted, :],
+#                 properties_objective_sphere_final_converged[idx_90_sphere_final, :],
+#                 properties_objective_continuity_final_converged[idx_90_continuity_final, :],
+#                 None, # properties_unconstrained_converged[idx_90_unconstrainted, :],
+#                 states_constrained_converged[:, :, idx_90_constrainted],
+#                 states_objective_sphere_final_converged[:, :, idx_90_sphere_final],
+#                 states_objective_continuity_final_converged[:, :, idx_90_continuity_final],
+#                 None, # states_unconstrained_final_converged[:, :, idx_90_unconstrainted_final],
+#                 cost_90th_percentile,
+#                 min_cost,
+#                 nb_shooting)
+
+graph_kinmatics_each_good(properties_constrained_converged[idx_good_constrainted, :],
+                properties_objective_sphere_final_converged[idx_good_sphere_final, :],
+                properties_objective_continuity_final_converged[idx_good_continuity_final, :],
+                None,
+                states_constrained_converged[:, :, idx_good_constrainted],
+                states_objective_sphere_final_converged[:, :, idx_good_sphere_final],
+                states_objective_continuity_final_converged[:, :, idx_good_continuity_final],
+                None,
+                cost_90th_percentile,
                 min_cost,
                 nb_shooting)
-
-
-# if HISTOGRAM_FLAG:
-#     fig, (cax, tax, pax) = plt.subplots(1, 3, figsize=(25, 5))
-#     plot_hist(cax, costs, "Costs distribution", "cost")
-#     plot_hist(tax, opt_times, "Optimization times distribution", "time (s)")
-#     plot_hist(pax, phase_times, "Phase times distribution", "time (s)")
-#     plt.tight_layout()
-#     fig.suptitle("All 10000 max iterations, 500 shootings, converged only")
-#     fig.savefig("../figures/constraint.pdf")
-
-# if HISTOGRAM_FLAG:
-#     fig, ((cax100, tax100, pax100), (cax1K, tax1K, pax1K), (cax10K, tax10K, pax10K)) = plt.subplots(3, 3, figsize=(25, 15))
-#     plot_hist(cax100, final_costs[0], "Costs distribution of final optimisation with 100 initial iterations", "cost")
-#     plot_hist(cax1K, final_costs[1], "Costs distribution of final optimisation with 1000 initial iterations", "cost")
-#     plot_hist(cax10K, final_costs[2], "Costs distribution of final optimisation with 10000 initial iterations", "cost")
-#
-#     plot_hist(tax100, final_opt_times[0], "Total optimistation time distribution of final optimisation with 100 initial iterations", "time (s)")
-#     plot_hist(tax1K, final_opt_times[1], "Total optimistation time distribution of final optimisation with 1000 initial iterations", "time (s)")
-#     plot_hist(tax10K, final_opt_times[2], "Total optimistation time distribution of final optimisation with 10000 initial iterations", "time (s)")
-#
-#     plot_hist(pax100, final_phase_times[0], "Phase time distribution of final optimisation with 100 initial iterations", "time (s)")
-#     plot_hist(pax1K, final_phase_times[1], "Phase time distribution of final optimisation with 1000 initial iterations", "time (s)")
-#     plot_hist(pax10K, final_phase_times[2], "Phase time distribution of final optimisation with 10000 initial iterations", "time (s)")
-#     plt.tight_layout()
-#     fig.suptitle("All weight 1M, 500 shootings, converged only")
-#     fig.savefig("../figures/final_continuity.pdf")
-#
-#     fig, ((cax100, tax100, pax100), (cax1K, tax1K, pax1K), (cax10K, tax10K, pax10K)) = plt.subplots(3, 3, figsize=(25, 15))
-#     plot_hist(cax100, initial_costs[0], "Costs distribution of initial optimisation with 100 initial iterations", "cost")
-#     plot_hist(cax1K, initial_costs[1], "Costs distribution of initial optimisation with 1000 initial iterations", "cost")
-#     plot_hist(cax10K, initial_costs[2], "Costs distribution of initial optimisation with 10000 initial iterations", "cost")
-#
-#     plot_hist(tax100, initial_opt_times[0], "Optimistation time distribution of initial optimisation with 100 initial iterations", "time (s)")
-#     plot_hist(tax1K, initial_opt_times[1], "Optimistation time distribution of initial optimisation with 1000 initial iterations", "time (s)")
-#     plot_hist(tax10K, initial_opt_times[2], "Optimistation time distribution of initial optimisation with 10000 initial iterations", "time (s)")
-#
-#     plot_hist(pax100, initial_phase_times[0], "Phase time distribution of initial optimisation with 100 initial iterations", "time (s)")
-#     plot_hist(pax1K, initial_phase_times[1], "Phase time distribution of initial optimisation with 1000 initial iterations", "time (s)")
-#     plot_hist(pax10K, initial_phase_times[2], "Phase time distribution of initial optimisation with 10000 initial iterations", "time (s)")
-#     plt.tight_layout()
-#     fig.suptitle("All weight 1M, 500 shootings, converged only")
-#     fig.savefig("../figures/initial_continuity.pdf")
-#
-#
-#
-# #########   Other   #########
-#
-# # objfin = df(type="objective", var="varopt", phase="final")
-# # mincost = min(objfin, key=extract_cost)
-# # objfin.index(mincost)
-# # mincost.case
-# # mincostinit = next(filter(lambda s: s.case == mincost.case, df(type="objective", var="varopt", phase="initial")))
-#
-
-# import bioviz
-# viz = bioviz.Viz("models/pendulum_maze.bioMod", show_floor=False)
-# viz.load_movement(mincostinit.states["q"])
-# viz.exec()
-
-
-
-
-
-
 
 
 
