@@ -2,6 +2,7 @@
 import os
 import pickle
 import biorbd
+import bioviz
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -144,13 +145,6 @@ def compute_max_transpersion(m, x, u, t, nb_shooting):
     # plt.show()
 
     return max_trans
-
-graph_convergence(properties_constrained_converged,
-                  properties_objective_sphere_final_converged,
-                  properties_objective_continuity_final_converged,
-                  max_cost,
-                  max_time_to_optimize,
-                  max_transpersion)
 
 def graph_convergence(properties_constrained_converged,
                       properties_objective_sphere_final_converged,
@@ -403,10 +397,10 @@ def graph_kinmatics_each_good(properties_constrained_converged,
     cbar = plt.colorbar(fake_plot_for_color, cax=cbar_ax, cmap='plasma')
     cbar.ax.set_title('Cost', fontsize=12)
 
-    plt.scatter(np.array([0]), np.array([0]), vmin=min_cost, vmax=max_cost, c=np.array([properties_objective_sphere_final_converged[idx_clusters_sphere_final[0][0][0], 7]]), label=u"Cluster #1 \u2014 " + f"{round(mean_cluster[0], 2)}", cmap='plasma')
-    plt.scatter(np.array([0]), np.array([0]), vmin=min_cost, vmax=max_cost, c=np.array([properties_objective_sphere_final_converged[idx_clusters_sphere_final[1][0][0], 7]]), label=u"Cluster #2 \u2014 " + f"{round(mean_cluster[1], 2)}", cmap='plasma')
-    plt.scatter(np.array([0]), np.array([0]), vmin=min_cost, vmax=max_cost, c=np.array([properties_objective_sphere_final_converged[idx_clusters_sphere_final[2][0][0], 7]]), label=u"Cluster #3 \u2014 " + f"{round(mean_cluster[2], 2)}", cmap='plasma')
-    plt.scatter(np.array([0]), np.array([0]), vmin=min_cost, vmax=max_cost, c=np.array([properties_objective_sphere_final_converged[idx_clusters_sphere_final[3][0][0], 7]]), label=u"Cluster #4 \u2014 " + f"{round(mean_cluster[3], 2)}", cmap='plasma')
+    plt.scatter(np.array([0]), np.array([0]), vmin=min_cost, vmax=max_cost, c=np.array([properties_objective_sphere_final_converged[idx_clusters_sphere_final[0][0][0], 7]]), label=u"Group #1 \u2014 " + f"{round(mean_cluster[0], 2)}", cmap='plasma')
+    plt.scatter(np.array([0]), np.array([0]), vmin=min_cost, vmax=max_cost, c=np.array([properties_objective_sphere_final_converged[idx_clusters_sphere_final[1][0][0], 7]]), label=u"Group #2 \u2014 " + f"{round(mean_cluster[1], 2)}", cmap='plasma')
+    plt.scatter(np.array([0]), np.array([0]), vmin=min_cost, vmax=max_cost, c=np.array([properties_objective_sphere_final_converged[idx_clusters_sphere_final[2][0][0], 7]]), label=u"Group #3 \u2014 " + f"{round(mean_cluster[2], 2)}", cmap='plasma')
+    plt.scatter(np.array([0]), np.array([0]), vmin=min_cost, vmax=max_cost, c=np.array([properties_objective_sphere_final_converged[idx_clusters_sphere_final[3][0][0], 7]]), label=u"Group #4 \u2014 " + f"{round(mean_cluster[3], 2)}", cmap='plasma')
 
     plt.legend(loc='upper center', bbox_to_anchor=(-23, -0.15), ncol=4, frameon=True)
 
@@ -473,8 +467,8 @@ def plot_stats(constrained_convergence_rate,
     ax[0].bar(1+0.2, constrained_convergence_rate, width=0.3, color=color_final)
     ax[0].bar(2-0.2, objective_continuity_initial_convergence_rate, width=0.3, color=color_initial)
     ax[0].bar(2+0.2, objective_continuity_final_convergence_rate, width=0.3, color=color_final)
-    ax[0].bar(3-0.2, objective_sphere_initial_convergence_rate, width=0.3, color=color_initial, label="First pass")
-    ax[0].bar(3+0.2, objective_sphere_final_convergence_rate, width=0.3, color=color_final, label="Second pass")
+    ax[0].bar(3-0.2, objective_sphere_initial_convergence_rate, width=0.3, color=color_initial, label="First optim.")
+    ax[0].bar(3+0.2, objective_sphere_final_convergence_rate, width=0.3, color=color_final, label="Second optim.")
 
     ax[0].text(1-0.2-0.2, 0+1, 'NA')
     ax[0].text(1+0.2-0.2, constrained_convergence_rate + 1, f'{round(constrained_convergence_rate, 1)}%')
@@ -497,7 +491,7 @@ def plot_stats(constrained_convergence_rate,
     sum_objective_sphere = 0
     sum_bjective_continuity = 0
     for i in range(4):
-        ax[1].bar(1, pourcentage_cost_constrainted[i], bottom=sum_constrained, width=0.4, color=colors[i], label="Cluster #{} {:} ".format(i+1, round(mean_cluster[i], 2)) + u'\u00B1' + " {:.1e}".format(std_cluster[i]))
+        ax[1].bar(1, pourcentage_cost_constrainted[i], bottom=sum_constrained, width=0.4, color=colors[i], label="Group #{} {:} ".format(i+1, round(mean_cluster[i], 2)) + u'\u00B1' + " {:.1e}".format(std_cluster[i]))
         ax[1].bar(2, pourcentage_cost_continuity_final[i], bottom=sum_bjective_continuity, width=0.4, color=colors[i])
         ax[1].bar(3, pourcentage_cost_sphere_final[i], bottom=sum_objective_sphere, width=0.4, color=colors[i])
         sum_constrained += pourcentage_cost_constrainted[i]
@@ -511,7 +505,7 @@ def plot_stats(constrained_convergence_rate,
     ax[1].set_ylim((0, 100))
     ax[1].set_xticks([1, 2, 3])
     ax[1].set_xticklabels(['Constrained', 'Continuity\npenalized', 'Spheres\npenalized'])
-    ax[1].set_title('Solutions in the clusters [%]')
+    ax[1].set_title('Solutions in the advisable groups [%]')
     ax[1].legend(loc='upper center', bbox_to_anchor=(0.5, -0.17))
     plt.subplots_adjust(bottom=0.30)
 
@@ -525,7 +519,7 @@ def plot_stats(constrained_convergence_rate,
     ax[2].text(3-0.2, pourcentage_transpersion_sphere_final + 1, f'{round(pourcentage_transpersion_sphere_final, 1)}%')
 
     # ax[2].set_xlim((0.4, 3.6))
-    # ax[2].set_ylim((0, 25))
+    ax[2].set_ylim((0, 110))
     ax[2].set_xticks([1, 2, 3])
     ax[2].set_xticklabels(['Constrained', 'Continuity\npenalized', 'Spheres\npenalized'])
     # ax[0].set_ylabel('[%]')
@@ -657,7 +651,7 @@ def plot_marker_trajectory(states_objective_sphere_final_converged, idx_clusters
     ax.add_patch(plt.Circle((1.4, 0.5), 0.35, color='r', clip_on=False))
 
     for i in range(4):
-        ax.plot(markers[i, :, 1], markers[i, :, 2], linestyle='-', color=colors[i], label=f'Cluster #{i+1}')
+        ax.plot(markers[i, :, 1], markers[i, :, 2], linestyle='-', color=colors[i], label=f'Group #{i+1}')
     ax.plot(markers[i, 0, 1], markers[i, 0, 2], 'ok')
 
 
@@ -681,7 +675,7 @@ def plot_marker_trajectory(states_objective_sphere_final_converged, idx_clusters
     ax.add_patch(plt.Circle((1.4, 0.5), 0.35, color='r', clip_on=True))
 
     for i in range(4):
-        ax.plot(markers[i, :, 1], markers[i, :, 2], linestyle='-', marker='.', color=colors[i], label=f'Cluster #{i+1}')
+        ax.plot(markers[i, :, 1], markers[i, :, 2], linestyle='-', marker='.', color=colors[i], label=f'Group #{i+1}')
     ax.plot(markers[i, 0, 1], markers[i, 0, 2], 'ok')
 
     ax.set_aspect('equal', 'box')
@@ -751,21 +745,21 @@ def plot_iteration_time(
         ax.scatter(np.random.random((len(objective_sphere_final_iteration))) * 0.2 + (3 + 0.2) - 0.1, objective_sphere_final_iteration, c=objective_sphere_final_time_per_iteration, norm=colors.LogNorm(vmin=min_time_per_iteration, vmax=max_time_per_iteration), alpha=0.6, edgecolors=None, s=0.4)
 
         ax.set_xlim((0.4, 3.6))
-        ax.set_xticks([1-0.2, 1+0.2, 2-0.2, 2+0.2, 3-0.2, 3+0.2], fontsize=10)
-        ax.set_xticklabels(['First\noptim', 'Second\noptim', 'First\noptim', 'Second\noptim', 'First\noptim', 'Second\noptim'], fontsize=10)
+        ax.set_xticks([1-0.2, 1+0.2, 2-0.2, 2+0.2, 3-0.2, 3+0.2], fontsize=12)
+        ax.set_xticklabels(['First\noptim', 'Second\noptim', 'First\noptim', 'Second\noptim', 'First\noptim', 'Second\noptim'], fontsize=12)
 
-        ax.text(1-0.25, 0, 'NA', fontsize=10)
-        ax.text(1-0.22, -2000, 'Constrained', weight='bold', fontsize=10)
-        ax.text(2-0.37, -2000, 'Continuity penalized', weight='bold', fontsize=10)
-        ax.text(3-0.33, -2000, 'Spheres penalized', weight='bold', fontsize=10)
-        ax.set_ylabel('Number of iterations', fontsize=10)
+        ax.text(1-0.25, 0, 'NA', fontsize=12)
+        ax.text(1-0.22, -2000, 'Constrained', weight='bold', fontsize=12)
+        ax.text(2-0.37, -2000, 'Continuity penalized', weight='bold', fontsize=12)
+        ax.text(3-0.33, -2000, 'Spheres penalized', weight='bold', fontsize=12)
+        ax.set_ylabel('Number of iterations', fontsize=12)
 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.10), ncol=2, frameon=False)
 
         plt.subplots_adjust(bottom=0.15, top=0.85, right=0.85)
         cbar_ax = fig.add_axes([0.89, 0.15, 0.03, 0.7])
         cbar = plt.colorbar(plt_0, cax=cbar_ax)
-        cbar.ax.set_title('Mean time\nper iteration\n[s]', fontsize=10)
+        cbar.ax.set_title('Mean time\nper iteration\n[s]', fontsize=12)
 
         plt.savefig("../figures/time_per_iteration_color.png", dpi=300)
         # plt.show()
@@ -794,16 +788,16 @@ def plot_iteration_time(
 
         ax.set_yscale('log')
         ax.set_xlim((0.4, 3.6))
-        ax.set_xticks([1 - 0.2, 1 + 0.2, 2 - 0.2, 2 + 0.2, 3 - 0.2, 3 + 0.2], fontsize=10)
+        ax.set_xticks([1 - 0.2, 1 + 0.2, 2 - 0.2, 2 + 0.2, 3 - 0.2, 3 + 0.2], fontsize=12)
         ax.set_xticklabels(
             ['First\noptim', 'Second\noptim', 'First\noptim', 'Second\noptim', 'First\noptim', 'Second\noptim'],
-            fontsize=10)
+            fontsize=12)
 
-        ax.text(1 - 0.25, 20, 'NA', fontsize=10)
-        ax.text(1 - 0.22, 6.5, 'Constrained', weight='bold', fontsize=10)
-        ax.text(2 - 0.37, 6.5, 'Continuity penalized', weight='bold', fontsize=10)
-        ax.text(3 - 0.33, 6.5, 'Spheres penalized', weight='bold', fontsize=10)
-        ax.set_ylabel('Number of iterations', fontsize=10)
+        ax.text(1 - 0.25, 20, 'NA', fontsize=12)
+        ax.text(1 - 0.22, 6.5, 'Constrained', weight='bold', fontsize=12)
+        ax.text(2 - 0.37, 6.5, 'Continuity penalized', weight='bold', fontsize=12)
+        ax.text(3 - 0.33, 6.5, 'Spheres penalized', weight='bold', fontsize=12)
+        ax.set_ylabel('Number of iterations', fontsize=12)
 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.10), ncol=2, frameon=False)
 
@@ -838,16 +832,16 @@ def plot_iteration_time(
 
         ax.set_yscale('log')
         ax.set_xlim((0.4, 3.6))
-        ax.set_xticks([1 - 0.2, 1 + 0.2, 2 - 0.2, 2 + 0.2, 3 - 0.2, 3 + 0.2], fontsize=10)
+        ax.set_xticks([1 - 0.2, 1 + 0.2, 2 - 0.2, 2 + 0.2, 3 - 0.2, 3 + 0.2], fontsize=12)
         ax.set_xticklabels(
-            ['First\noptim', 'Second\noptim', 'First\noptim', 'Second\noptim', 'First\noptim', 'Second\noptim'],
-            fontsize=10)
+            ['First\noptim.', 'Second\noptim.', 'First\noptim.', 'Second\noptim.', 'First\noptim.', 'Second\noptim.'],
+            fontsize=12)
 
-        ax.text(1 - 0.25, 0.09, 'NA', fontsize=10)
-        ax.text(1 - 0.22, 0.035, 'Constrained', weight='bold', fontsize=10)
-        ax.text(2 - 0.37, 0.035, 'Continuity penalized', weight='bold', fontsize=10)
-        ax.text(3 - 0.33, 0.035, 'Spheres penalized', weight='bold', fontsize=10)
-        ax.set_ylabel('Mean computational time per iteration [s]', fontsize=10)
+        ax.text(1 - 0.25, 0.09, 'NA', fontsize=12)
+        ax.text(1 - 0.22, 0.035, 'Constrained', weight='bold', fontsize=12)
+        ax.text(2 - 0.37, 0.035, 'Continuity penalized', weight='bold', fontsize=12)
+        ax.text(3 - 0.33, 0.035, 'Spheres penalized', weight='bold', fontsize=12)
+        ax.set_ylabel('Computational time per iteration [s]', fontsize=12)
 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.10), ncol=2, frameon=False)
 
@@ -889,10 +883,21 @@ def plot_why_penetrating_sol_high_cost(states, cost, transpersion):
 
     return
 
+def animate_clusters(idx_clusters_sphere_final, states_objective_sphere_final_converged):
+
+    model_path = "/home/mickaelbegon/Documents/Eve/ContinuityObjectiveTests-master/models/pendulum_maze.bioMod"
+    for i in range(4):
+        b = bioviz.Viz(model_path, show_segments_center_of_mass=False,
+                       show_local_ref_frame=False, background_color=(1, 1, 1), markers_size=0.01)
+        b.load_movement(states_objective_sphere_final_converged[:2, :, idx_clusters_sphere_final[i][0][0]])
+        b.exec()
+
+    return
 
 #########   Loading data   #########
 
 LOAD_DATA_FLAG = False
+FLAG_GENERATE_VIDEO = False
 nb_shooting = 500
 
 if LOAD_DATA_FLAG:
@@ -929,7 +934,6 @@ else:
     properties_all = data[0]
     states_all = data[1]
 
-# embed()
 
 # Sort the files loaded + print convergence rate
 properties_constrained = properties_all[np.where(properties_all[:, 0] == "constraint"), :][0]
@@ -976,6 +980,7 @@ states_objective_continuity_final_converged = states_objective_continuity_final[
 objective_continuity_final_convergence_rate = len(objective_continuity_final_index_converged[0]) / len(properties_objective_continuity_final) * 100
 print("Convergence rate objective_continuity->constraint OCP final step : ", objective_continuity_final_convergence_rate, "%")
 
+print("\n\n")
 
 properties_all_converged = properties_all[np.where(properties_all[:, 9] == 0), :][0]
 
@@ -1004,6 +1009,9 @@ for i in range(4):
     idx_clusters_constrainted += [np.where(np.logical_and(properties_constrained_converged[:, 7] > cost_clusters[i][0], properties_constrained_converged[:, 7] < cost_clusters[i][1] ))]
     idx_clusters_sphere_final += [np.where(np.logical_and(properties_objective_sphere_final_converged[:, 7] > cost_clusters[i][0], properties_objective_sphere_final_converged[:, 7] < cost_clusters[i][1] ))]
     idx_clusters_continuity_final += [np.where(np.logical_and(properties_objective_continuity_final_converged[:, 7] > cost_clusters[i][0], properties_objective_continuity_final_converged[:, 7] < cost_clusters[i][1] ))]
+
+if FLAG_GENERATE_VIDEO:
+    animate_clusters(idx_clusters_sphere_final, states_objective_sphere_final_converged)
 
 # The solutions that did not transperse
 idx_no_trans_constrainted = np.where(properties_constrained_converged[:, 10] == 0)[0]
@@ -1048,6 +1056,8 @@ print(f"{pourcentage_good_constrainted} % of the constrained solutions did not t
 print(f"{pourcentage_good_sphere_final} % of the objective_sphere solutions did not transperse and were in the clusters")
 print(f"{pourcentage_good_continuity_final} % of the objective_continuity solutions did not transperse and were in the clusters")
 
+print("\n\n")
+
 constrained_mean_iteration = np.mean(properties_constrained_converged[:, 11])
 constrained_mean_time_per_iteration = np.mean(properties_constrained_converged[:, 12])
 objective_sphere_initial_mean_iteration = np.mean(properties_objective_sphere_initial_converged[:, 11])
@@ -1079,10 +1089,16 @@ objective_sphere_initial_computational_time_median = np.median(properties_object
 objective_sphere_final_computational_time_median = np.median(properties_objective_sphere_final_converged[:, 8])
 objective_continuity_initial_computational_time_median = np.median(properties_objective_continuity_initial_converged[:, 8])
 objective_continuity_final_computational_time_median = np.median(properties_objective_continuity_final_converged[:, 8])
-print(f"{constrained_computational_time_median}s needed for the constrained solutions to converge")
-print(f"{objective_sphere_final_computational_time_median}s needed for the initial + final spheres solutions to converge")
-print(f"{objective_continuity_final_computational_time_median}s needed for the initial + final continuity solutions to converge")
+constrained_computational_time_std = np.std(properties_constrained_converged[:, 8])
+objective_sphere_initial_computational_time_std = np.std(properties_objective_sphere_initial_converged[:, 8])
+objective_sphere_final_computational_time_std = np.std(properties_objective_sphere_final_converged[:, 8])
+objective_continuity_initial_computational_time_std = np.std(properties_objective_continuity_initial_converged[:, 8])
+objective_continuity_final_computational_time_std = np.std(properties_objective_continuity_final_converged[:, 8])
+print(f"{constrained_computational_time_median} +- {constrained_computational_time_std}s needed for the constrained solutions to converge")
+print(f"{objective_sphere_final_computational_time_median} +- {objective_sphere_final_computational_time_std}s needed for the initial + final spheres solutions to converge")
+print(f"{objective_continuity_final_computational_time_median} +- {objective_continuity_final_computational_time_std}s needed for the initial + final continuity solutions to converge")
 
+print("\n\n")
 
 graph_convergence(properties_constrained_converged,
                   properties_objective_sphere_final_converged, 
