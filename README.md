@@ -1,18 +1,12 @@
-# ObstacleWorkAround
+This respository contains the code used to assess the two optimization step work-flow which will be presented at ECCOMAS 2023 and in the related conference paper entitled "Warm-starting multi-start procedure using penalties instead of constraints to find more optimal trajectories" (DOI to come). 
 
-## Experiments breakdown
+## Two optimization step work-flow
 
-100 noized initial guess where generated procedurally with `np.random.seed(42)`, a popular seed may I say.
+1. 100 noized initial guess where generated
+2. The underconstrained OCP is solved (replacing either the continuity or the obstacles with penalty terms in the cost function)
+3. The fully constrained OCP is solved with the solution from 2. as initial guess.
 
-### Constraints
+## Results
+The proposed work-flow allowed to jump over the constraint barriers allowing the generation of more globally optimal solutions that a random intialization.
 
-Ran the OCP the classic way, 10_000 iterations max.
-
-### Objectives
-
-Ran the OCP in two phases. Phase 1: try to solve using Continuity as an objective and Phase 2: solve the classic way using the solution from phase 1 as the initial guess.
-Three run were tested:
-1. with variable number of max iterations (100, 1000, 10_000) in phase 1 with the same weight for each (1_000_000).
-2. with variable weight (1000, 1_000_000, 1_000_000_000) in phase 1 with the same number of max iterations (10_000).
-3. with what seemed an optimal combination after preliminary analysis (weight 1_000_000_000 for 1000 iterations max in phase 1).
-
+If you have any questions, please contact eve.charbonneau.1@umontreal.ca
