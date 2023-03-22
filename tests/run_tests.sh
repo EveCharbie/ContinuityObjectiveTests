@@ -2,18 +2,6 @@
 
 for ((idx_random=0; idx_random<100; idx_random=idx_random+1)); do
 
-    # run unconstrained - constrained
-    weights=(1000 100000 1000000)
-    weight_spheres=(1000 100000 1000000)
-    max_iters=(100 1000 10000)
-    for weight in ${weights[*]}; do
-        for weight_sphere in ${weight_spheres[*]}; do
-            for max_iter in ${max_iters[*]}; do
-                python3 obstacle_work_around.py unconstrained $idx_random --iters1 ${max_iter}  --iters2 10000 --weight ${weight} --weight_sphere ${weight_sphere} --solver IPOPT
-            done
-        done
-    done
-
     # run tests mixed_sphere - constrained
     weights=(1000 100000 1000000)
     max_iters=(100 1000 10000)

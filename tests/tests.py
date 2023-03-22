@@ -28,7 +28,6 @@ def test_unconstrained(
     SOLVER_FLAG: str = "IPOPT",
 ):
     logging.info(f"Running unconstrained test {i} with weight={weight} and weight_sphere={weight_sphere}...")
-    # start = time.time()
 
     ocp = prepare_ocp_unconstrained(
         biorbd_model_path,
@@ -80,7 +79,6 @@ def test_unconstrained(
 
     sol2 = ocp.solve(solver)
     sol2.detailed_cost_values()
-    # stop = time.time()
 
     del sol2.ocp
     sol2.weight = weight
@@ -132,7 +130,6 @@ def test_objective_sphere(
 	SOLVER_FLAG: str = "IPOPT",
 ):
     logging.info(f"Running objective test {i} with weight={weight} and max_iteration_first={max_iteration_first}...")
-    # start = time.time()
     ocp = prepare_ocp_objective_shpere(
         biorbd_model_path,
         final_time,
@@ -181,7 +178,6 @@ def test_objective_sphere(
 
     sol2 = ocp.solve(solver)
     sol2.detailed_cost_values()
-    # stop = time.time()
 
     del sol2.ocp
     sol2.weight = weight
@@ -231,7 +227,6 @@ def test_objective_continuity(
     SOLVER_FLAG: str = "IPOPT",
 ):
     logging.info(f"Running objective test {i} with weight_sphere={weight_sphere} and max_iteration_first={max_iteration_first}...")
-    # start = time.time()
     ocp = prepare_ocp_objective_continuity(
         biorbd_model_path,
         final_time,
@@ -280,7 +275,6 @@ def test_objective_continuity(
 
     sol2 = ocp.solve(solver)
     sol2.detailed_cost_values()
-    # stop = time.time()
 
     total_real_time_to_optimize_2 = sol2.real_time_to_optimize
     del sol2.ocp

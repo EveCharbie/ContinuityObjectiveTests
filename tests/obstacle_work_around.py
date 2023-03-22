@@ -18,7 +18,7 @@ if DEBUG_FLAG:
             self.iters2 = 10
             self.weight = 1000000
             self.weight_sphere = 100
-            self.solver = "IPOPT"  # "SQP_method"
+            self.solver = "IPOPT"
 
     args = Arguments()
 
