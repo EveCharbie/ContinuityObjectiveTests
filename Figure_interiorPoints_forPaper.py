@@ -8,6 +8,7 @@ def pol2cart(r, theta):
     y = r * np.sin(theta)
     return x, y
 
+"""
 # fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 R = np.linspace(0, 2*np.pi, 500)
 theta = np.sin(10*R)+ 2
@@ -59,12 +60,63 @@ ax.axis('off')
 ax.set_aspect('equal', 'box')
 plt.savefig("gradient.png", dpi=300)
 plt.show()
+"""
 
 
 
 
+fig, ax = plt.subplots(1, 1)
+
+xlist = np.linspace(-3.5, 3.5, 500)
+ylist = np.linspace(-3.5, 3.5, 500)
+X, Y = np.meshgrid(xlist, ylist)
+Z = (X/0.5)**2 + Y**2 + 10*(X+0.6-Y)**2
+cp = ax.contourf(X, Y, Z, 20)
+
+plt.plot(xlist, -xlist+0.6, "k", linestyle=(0, (5, 10)), linewidth=0.5)
+
+ax.get_xaxis().set_visible(False)
+ax.get_yaxis().set_visible(False)
+ax.axis('off')
+ax.set_aspect('equal', 'box')
+plt.savefig("Unconstrainted_version.png", dpi=300)
+plt.show()
 
 
+fig, ax = plt.subplots(1, 1)
+
+xlist = np.linspace(-3.5, 3.5, 500)
+ylist = np.linspace(-3.5, 3.5, 500)
+X, Y = np.meshgrid(xlist, ylist)
+Z = (X/0.5)**2 + Y**2
+cp = ax.contourf(X, Y, Z, 20)
+
+plt.plot(xlist, -xlist+0.6, '-k', linewidth=2)
+
+ax.get_xaxis().set_visible(False)
+ax.get_yaxis().set_visible(False)
+ax.axis('off')
+ax.set_aspect('equal', 'box')
+plt.savefig("Constrainted_version.png", dpi=300)
+plt.show()
+
+
+
+
+fig, ax = plt.subplots(1, 1)
+
+xlist = np.linspace(-7.5, 7.5, 500)
+ylist = np.linspace(-7.5, 7.5, 500)
+X, Y = np.meshgrid(xlist, ylist)
+Z = np.sin(X) + np.sin(Y)
+cp = ax.contourf(X, Y, Z, 20)
+
+ax.get_xaxis().set_visible(False)
+ax.get_yaxis().set_visible(False)
+ax.axis('off')
+ax.set_aspect('equal', 'box')
+plt.savefig("Multiple_minimum.png", dpi=300)
+plt.show()
 
 
 
